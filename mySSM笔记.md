@@ -70,6 +70,291 @@
 
 #### 1、IoC入门案例
 
-https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=6
+<b style="color:red;">案例思路分析：</b>
+
+- 管理什么：Service与Dao
+- 如何将被管理的对象告知IoC容器：配置
+- 被管理的对象交给IoC容器，如何获取到IoC容器：接口
+- IoC容器得到后，如何从中获取Bean：（接口方法）
+- 使用Spring导入哪些（依赖）坐标：pom.xml
+
+
+
+##### ①创建项目
+
+![IoC入门案例-创建项目工程](./images/IoC入门案例-创建项目工程.png)
+
+
+
+##### ②引入依赖坐标
+
+主要导入`spring-context`
+
+```xml
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.stone</groupId>
+    <artifactId>ioc_demo</artifactId>
+    <version>1.0-SNAPSHOT</version>
+
+    <name>ioc_demo</name>
+    <dependencies>
+        <!--spring-->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
+            <version>5.3.27</version>
+        </dependency>
+        <!--junit-->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.12</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+</project>
+```
+
+
+
+##### ③创建配置文件
+
+<span style="color:red;">需要先创建 `resources` 目录</span>
+
+![IoC入门案例-创建Spring配置文件](./images/IoC入门案例-创建Spring配置文件.png)
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <!--配置Bean-->
+    <!--
+    bean标签表示配置Bean
+    id属性表示Bean在IoC容器中的唯一标识
+    class属性指定Bean的类型
+    -->
+    <bean id="bookService" class="com.stone.service.impl.BookServiceImpl"/>
+    <bean id="bookDao" class="com.stone.dao.impl.BookDaoImpl"/>
+</beans>
+```
+
+
+
+##### ④获取IoC容器和Bean
+
+任意创建一个类用来获取IoC容器和Bean，其中的main方法如下：
+
+```java
+public static void main(String[] args) {
+    // 获取IoC容器
+    ApplicationContext context = new ClassPathXmlApplicationContext("applicationContext.xml");
+    // 从容器中获取Bean对象
+    //BookDao bookDao = (BookDao) context.getBean("bookDao");
+    //bookDao.save();
+    BookService bookService = (BookService) context.getBean("bookService");
+    bookService.save();
+}
+```
+
+
+
+##### ⑤Service层&Dao层代码
+
+`BookService`
+
+```java
+package com.stone.service;
+
+public interface BookService {
+
+    void save();
+}
+```
+
+`BookServiceImpl`
+
+```java
+package com.stone.service.impl;
+
+import com.stone.dao.BookDao;
+import com.stone.dao.impl.BookDaoImpl;
+import com.stone.service.BookService;
+
+public class BookServiceImpl implements BookService {
+
+    private BookDao bookDao = new BookDaoImpl();
+
+    public void save() {
+        System.out.println("book service save...");
+        bookDao.save();
+    }
+}
+```
+
+`BookDao`
+
+```java
+package com.stone.dao;
+
+public interface BookDao {
+
+    void save();
+}
+```
+
+`BookDaoImpl`
+
+```java
+package com.stone.dao.impl;
+
+import com.stone.dao.BookDao;
+
+public class BookDaoImpl implements BookDao {
+    public void save() {
+        System.out.println("book dao save...");
+    }
+}
+```
+
+
+
+##### ⑥执行main方法，查看运行结果
+
+![IoC入门案例执行结果](./images/IoC入门案例执行结果.png)
+
+
 
 #### 2、DI入门案例
+
+<b style="color:red;">案例思路分析：</b>
+
+- 基于IoC管理Bean
+- Service中不再使用new形式创建Dao对象
+- Service中需要的Dao对象如何创建获取：提供方法
+- Service与Dao间的关系如何描述：配置
+
+
+
+##### ①改造Service层代码
+
+删除Service中使用new的方式创建Dao对象的代码；提供依赖的Dao对象对应的setter方法。
+
+`BookServiceImpl.java`
+
+```java
+package com.stone.service.impl;
+
+import com.stone.dao.BookDao;
+import com.stone.service.BookService;
+
+public class BookServiceImpl implements BookService {
+
+    // 移除new方式创建的对象
+    private BookDao bookDao;
+
+    public void save() {
+        System.out.println("book service save...");
+        bookDao.save();
+    }
+
+    // 提供dao对象对应的setter方法
+    public void setBookDao(BookDao bookDao) {
+        this.bookDao = bookDao;
+    }
+}
+```
+
+
+
+##### ②配置service与dao之间的关系
+
+`applicationContext.xml`
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <!--配置Bean-->
+    <!--
+    bean标签表示配置Bean
+    id属性表示Bean在IoC容器中的唯一标识
+    class属性指定Bean的类型
+    -->
+    <bean id="bookDao" class="com.stone.dao.impl.BookDaoImpl"/>
+    <bean id="bookService" class="com.stone.service.impl.BookServiceImpl">
+        <!--配置Service与Dao的关系-->
+        <!--
+        property标签表示配置当前Bean的属性
+        name属性表示配置Bean中哪一个具体的属性
+        ref属性表示参照哪一个bean标签
+        -->
+        <property name="bookDao" ref="bookDao"/>
+    </bean>
+</beans>
+```
+
+property标签中两种属性的含义：
+
+![property标签中属性的含义](./images/property标签中属性的含义.png)
+
+
+
+##### ③重新执行main方法
+
+![IoC入门案例执行结果](./images/IoC入门案例执行结果.png)
+
+
+
+#### 3、Bean配置
+
+首先创建一个新的项目工程，代码内容与入门案例工程一样，后续配置的修改基于这个新项目
+
+![Bean基础配置-创建项目工程](./images/Bean基础配置-创建项目工程.png)
+
+**Bean基础配置**
+
+![Bean基础配置](./images/Bean基础配置.png)
+
+
+
+**Bean别名配置**：为Bean设置多个别名
+
+![Bean别名配置](./images/Bean别名配置.png)
+
+在配置文件中为Bean设置别名
+
+```xml
+<bean id="bookService" name="bookService2 bookService3 bookService4 "
+          class="com.stone.service.impl.BookServiceImpl" />
+```
+
+修改`main`方法中获取Bean的方法
+
+```java
+public static void main(String[] args) {
+    ApplicationContext context = new ClassPathXmlApplicationContext("applicationContext.xml");
+    BookService bookService = (BookService) context.getBean("bookService2");
+    bookService.save();
+}
+```
+
+当我们通过指定一个从未定义过的别名来获取Bean时，会报错：<b style="color:red;">NoSuchBeanDefinitionException</b>
+
+```java
+BookService bookService = (BookService) context.getBean("myBookService2");
+```
+
+![通过未定义的别名获取Bean时报错](./images/通过未定义的别名获取Bean时报错.png)
+
+
+
+**Bean作用范围配置**：
+
+https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=8

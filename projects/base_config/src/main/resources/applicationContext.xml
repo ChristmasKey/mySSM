@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <!--配置Bean-->
+    <bean id="bookDao" class="com.stone.dao.impl.BookDaoImpl"/>
+    <bean id="bookService" name="bookService2 bookService3 bookService4"
+          class="com.stone.service.impl.BookServiceImpl">
+        <!--配置Service与Dao的关系-->
+        <property name="bookDao" ref="bookDao"/>
+    </bean>
+
+</beans>
