@@ -312,7 +312,7 @@ property标签中两种属性的含义：
 
 
 
-#### 3、Bean配置
+#### 3、Bean的配置
 
 首先创建一个新的项目工程，代码内容与入门案例工程一样，后续配置的修改基于这个新项目
 
@@ -355,6 +355,166 @@ BookService bookService = (BookService) context.getBean("myBookService2");
 
 
 
-**Bean作用范围配置**：
+**Bean作用范围配置**：通过Spring创建的Bean对象是单例的还是非单例的
 
-https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=8
+![Bean作用范围配置](./images/Bean作用范围配置.png)
+
+通过IoC容器创建两个相同的Bean对象，并打印查看它们的内存地址，会发现它们的内存地址是一样的，这就意味着Spring为我们创建的Bean对象默认是单例的
+
+```java
+public static void main(String[] args) {
+    ApplicationContext context = new ClassPathXmlApplicationContext("applicationContext.xml");
+    BookDao bookDao1 = (BookDao) context.getBean("bookDao");
+    BookDao bookDao2 = (BookDao) context.getBean("bookDao");
+    System.out.println(bookDao1);
+    System.out.println(bookDao2);
+}
+```
+
+![Spring默认创建两个相同的Bean对象](./images/Spring默认创建两个相同的Bean对象.png)
+
+<span style="color:red;">通过配置，我们可以让Spring创建两个非单例的Bean对象</span>
+
+```xml
+<bean id="bookDao" class="com.stone.dao.impl.BookDaoImpl" scope="prototype"/>
+```
+
+![Spring创建两个非单例的Bean对象](./images/Spring创建两个非单例的Bean对象.png)
+
+<b style="color:blue;">为什么Spring中的Bean默认为单例的？</b>
+
+对于Spring来说，它帮我们管理的Bean需要放到IoC容器中，如果创建的Bean对象非单例的，那么在每次使用时都会创建一个Bean对象，这会导致IoC容器中的Bean对象越来越多，造成不必要的资源浪费。<span style="color:red;">由此可见，并非所有对象都适合交给Spring作为Bean去管理！</span>
+
+- 适合交给容器进行管理的Bean：可以重复使用的对象
+    - 表现层对象
+    - 业务层对象
+    - 数据层对象
+    - 工具对象
+- 不适合交给容器进行管理的对象：有状态的对象（如domain对象，其中记录着属性的状态值）
+    - 封装实体的域对象
+
+
+
+#### 4、Bean的实例化
+
+创建一个新的项目工程`bean_instance`
+
+![Bean实例化-创建项目工程](./images/Bean实例化-创建项目工程.png)
+
+<span style="color:red;">Bean是如何创建的：Bean本质上就是对象，Spring默认调用构造方法来创建Bean对象。</span>
+
+我们在项目中创建一个Dao对象并把它交给Spring去管理：
+
+`BookDao`
+
+```java
+package com.stone.dao;
+
+public interface BookDao {
+
+    void save();
+}
+```
+
+`BookDaoImpl`
+
+```java
+package com.stone.dao.impl;
+
+import com.stone.dao.BookDao;
+
+public class BookDaoImpl implements BookDao {
+
+    /**
+     * Spring是通过构造方法来创建Bean对象的
+     * 并且无论构造方法是public还是private，Spring都可以执行
+     * 可见Spring底层是通过反射来获取构造方法的！！！
+     */
+    public BookDaoImpl() {
+        System.out.println("book dao constructor is running ...");
+    }
+
+    public void save() {
+        System.out.println("book dao save ...");
+    }
+}
+```
+
+`applicationContext.xml`
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <bean id="bookDao" class="com.stone.dao.impl.BookDaoImpl"/>
+</beans>
+```
+
+main方法
+
+```java
+package com.stone;
+
+import com.stone.dao.BookDao;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+
+public class AppForInstanceBook {
+    public static void main(String[] args) {
+        ApplicationContext context = new ClassPathXmlApplicationContext("applicationContext.xml");
+        BookDao bookDao = (BookDao) context.getBean("bookDao");
+        bookDao.save();
+    }
+}
+```
+
+执行main方法后查看控制台打印结果
+
+![Spring通过构造器创建Bean对象](./images/Spring通过构造器创建Bean对象.png)
+
+<span style="color:red;">如果我们将构造方法稍作改动，Spring还能调用它吗？</span>
+
+```java
+public BookDaoImpl(int i) {
+    System.out.println("book dao constructor is running ...");
+}
+```
+
+会发现报错了：
+
+![Spring调用有参构造函数报错](./images/Spring调用有参构造函数报错.png)
+
+<b style="color:blue;">由此可知：Spring只能调用无参构造方法来创建Bean对象！</b>
+
+
+
+##### 实例化Bean的三种方式
+
+**①构造方法（常用）**
+
+- 提供可访问的构造方法（无参构造方法默认提供，可以缺省）
+
+```java
+public class BookDaoImpl implements BookDao {
+
+    //public BookDaoImpl() {
+    //    System.out.println("book dao constructor is running ...");
+    //}
+
+    public void save() {
+        System.out.println("book dao save ...");
+    }
+}
+```
+
+- 配置Bean
+
+```java
+<bean id="bookDao" class="com.stone.dao.impl.BookDaoImpl"/>
+```
+
+
+
+https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=10
