@@ -447,7 +447,7 @@ public class BookDaoImpl implements BookDao {
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
-
+    <!--方式一：通过构造方法实例化Bean-->
     <bean id="bookDao" class="com.stone.dao.impl.BookDaoImpl"/>
 </beans>
 ```
@@ -517,4 +517,179 @@ public class BookDaoImpl implements BookDao {
 
 
 
-https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=10
+**②静态工厂（了解）**
+
+新建一个Dao对象
+
+`OrderDao`
+
+```java
+package com.stone.dao;
+
+public interface OrderDao {
+
+    void save();
+}
+```
+
+`OrderDaoImpl`
+
+```java
+package com.stone.dao.impl;
+
+import com.stone.dao.OrderDao;
+
+public class OrderDaoImpl implements OrderDao {
+
+    public void save() {
+        System.out.println("order dao save ...");
+    }
+}
+```
+
+<span style="color:red;">我们再创建一个静态工厂类，用来创建OrderDao对象实例</span>
+
+```java
+package com.stone.factory;
+
+import com.stone.dao.OrderDao;
+import com.stone.dao.impl.OrderDaoImpl;
+
+public class OrderDaoFactory {
+
+    public static OrderDao getOrderDaoInstance() {
+        return new OrderDaoImpl();
+    }
+}
+```
+
+于是我们可以在main方法中这样编写：
+
+```java
+public static void main(String[] args) {
+    // 通过静态工厂创建对象
+    OrderDao orderDao = OrderDaoFactory.getOrderDaoInstance();
+    orderDao.save();
+}
+```
+
+那么如何在Spring中使用静态工厂实例化Bean呢？<span style="color:red;">我们可以在配置文件中做如下配置</span>：
+
+```xml
+<!--方式二：通过静态工厂实例化Bean-->
+<bean id="orderDao" class="com.stone.factory.OrderDaoFactory" factory-method="getOrderDaoInstance"/>
+```
+
+修改main方法：
+
+```java
+public static void main(String[] args) {
+    // 通过静态工厂创建对象
+    //OrderDao orderDao = OrderDaoFactory.getOrderDaoInstance();
+    //orderDao.save();
+
+    // 通过Spring调用静态工厂创建对象
+    ApplicationContext context = new ClassPathXmlApplicationContext("applicationContext.xml");
+    OrderDao orderDao = (OrderDao) context.getBean("orderDao");
+    orderDao.save();
+}
+```
+
+最终控制台的打印结果如下：
+
+![Spring通过静态工厂创建Bean对象](./images/Spring通过静态工厂创建Bean对象.png)
+
+
+
+**③实例工厂与FactoryBean（了解）**
+
+同样创建一个Dao对象
+
+`UserDao`
+
+```java
+package com.stone.dao;
+
+public interface UserDao {
+
+    void save();
+}
+```
+
+`UserDaoImpl`
+
+```java
+package com.stone.dao.impl;
+
+import com.stone.dao.UserDao;
+
+public class UserDaoImpl implements UserDao {
+
+    public void save() {
+        System.out.println("user dao save ...");
+    }
+}
+```
+
+<span style="color:red;">我们再创建一个实例工厂类，用来创建UserDao对象实例（实例工厂与静态工厂的区别在于它的方法非静态的）</span>
+
+```java
+package com.stone.factory;
+
+import com.stone.dao.UserDao;
+import com.stone.dao.impl.UserDaoImpl;
+
+public class UserDaoFactory {
+
+    public UserDao getUserDao() {
+        return new UserDaoImpl();
+    }
+}
+```
+
+在main方法中编写代码如下：
+
+```java
+public static void main(String[] args) {
+    // 创建实例工厂对象
+    UserDaoFactory userDaoFactory = new UserDaoFactory();
+    // 通过实力工厂对象创建Dao对象实例
+    UserDao userDao = userDaoFactory.getUserDao();
+    userDao.save();
+}
+```
+
+要在Spring中使用实例工厂来实例化Bean，<span style="color:red;">我们可以在配置文件中做如下配置</span>：
+
+```xml
+<!--方式三：通过实例工厂实例化Bean-->
+<!--首先 创建实例工厂Bean-->
+<bean id="userDaoFactory" class="com.stone.factory.UserDaoFactory"/>
+<!--其次 指定实例工厂Bean来创建Dao对象Bean-->
+<bean id="userDao" factory-bean="userDaoFactory" factory-method="getUserDao"/>
+```
+
+修改main方法：
+
+```java
+public static void main(String[] args) {
+    // 创建实例工厂对象
+    //UserDaoFactory userDaoFactory = new UserDaoFactory();
+    // 通过实力工厂对象创建Dao对象实例
+    //UserDao userDao = userDaoFactory.getUserDao();
+    //userDao.save();
+
+    // 通过Spring创建实例工厂对象
+    ApplicationContext context = new ClassPathXmlApplicationContext("applicationContext.xml");
+    UserDao userDao = (UserDao) context.getBean("userDao");
+    userDao.save();
+}
+```
+
+最终控制台打印结果如下：
+
+![Spring通过实例工厂创建Bean对象](./images/Spring通过实例工厂创建Bean对象.png)
+
+
+
+https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=11

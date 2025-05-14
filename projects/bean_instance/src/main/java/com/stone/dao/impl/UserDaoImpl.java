@@ -1,4 +1,10 @@
 package com.stone.dao.impl;
 
-public class UserDaoImpl {
+import com.stone.dao.UserDao;
+
+public class UserDaoImpl implements UserDao {
+
+    public void save() {
+        System.out.println("user dao save ...");
+    }
 }
