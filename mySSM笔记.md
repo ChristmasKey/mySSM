@@ -692,4 +692,74 @@ public static void main(String[] args) {
 
 
 
-https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=11
+<b style="color:red;">对于第三种方式，需要创建两种Bean，显然有点鸡肋，因此Spring专门针对其进行了改良</b>
+
+首先我们需要创建一个 `UserDaoFactoryBean` 并实现 `FactoryBean` 接口及其中的方法
+
+```java
+package com.stone.factory;
+
+import com.stone.dao.UserDao;
+import com.stone.dao.impl.UserDaoImpl;
+import org.springframework.beans.factory.FactoryBean;
+
+public class UserDaoFactoryBean implements FactoryBean<UserDao> {
+
+    // 代替原始实例工厂中创建对象的方法
+    public UserDao getObject() throws Exception {
+        return new UserDaoImpl();
+    }
+
+    // 获取Bean对象类型
+    public Class<?> getObjectType() {
+        return UserDao.class;
+    }
+}
+```
+
+其次我们只需要在配置文件中配置一个上述的 `FactoryBean` 即可
+
+```xml
+<!--方式四：通过FactoryBean实例化Bean-->
+<bean id="userDao2" class="com.stone.factory.UserDaoFactoryBean"/>
+```
+
+其他代码不需要改动，再次运行main方法，控制台依旧可以打印出同上的结果（图略）
+
+
+
+**此时我们需要思考，通过这种改良方式创建出来的Bean对象实例是否是单例的**
+
+可以在main方法中验证一下
+
+```java
+public static void main(String[] args) {
+    // 创建实例工厂对象
+    //UserDaoFactory userDaoFactory = new UserDaoFactory();
+    // 通过实力工厂对象创建Dao对象实例
+    //UserDao userDao = userDaoFactory.getUserDao();
+    //userDao.save();
+
+    // 通过Spring创建实例工厂对象
+    ApplicationContext context = new ClassPathXmlApplicationContext("applicationContext.xml");
+    UserDao userDao = (UserDao) context.getBean("userDao");
+    userDao.save();
+
+    UserDao userDao2 = (UserDao) context.getBean("userDao");
+    System.out.println(userDao);
+    System.out.println(userDao2);
+
+}
+```
+
+从控制台打印结果来看，Bean对象任然是单例的
+
+![Spring基于实例工厂改良的方式创建单例Bean对象实例](./images/Spring基于实例工厂改良的方式创建单例Bean对象实例.png)
+
+
+
+通过实现 `FactoryBean` 中的 *isSingleton* 方法，可以配置创建的Bean对象是否为单例的
+
+
+
+https://www.bilibili.com/video/BV1Fi4y1S7ix/?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=11

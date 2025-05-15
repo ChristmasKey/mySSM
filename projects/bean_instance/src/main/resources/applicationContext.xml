@@ -4,12 +4,18 @@
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
 
     <!--方式一：通过构造方法实例化Bean-->
-    <!--<bean id="bookDao" class="com.stone.dao.impl.BookDaoImpl"/>-->
+    <bean id="bookDao" class="com.stone.dao.impl.BookDaoImpl"/>
+
     <!--方式二：通过静态工厂实例化Bean-->
     <bean id="orderDao" class="com.stone.factory.OrderDaoFactory" factory-method="getOrderDaoInstance"/>
+
     <!--方式三：通过实例工厂实例化Bean-->
     <!--首先创建实例工厂Bean-->
     <bean id="userDaoFactory" class="com.stone.factory.UserDaoFactory"/>
     <!--其次指定实例工厂Bean来创建Dao对象Bean-->
     <bean id="userDao" factory-bean="userDaoFactory" factory-method="getUserDao"/>
+
+    <!--方式四：通过FactoryBean实例化Bean-->
+    <bean id="userDao2" class="com.stone.factory.UserDaoFactoryBean"/>
+
 </beans>
