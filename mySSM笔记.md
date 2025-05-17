@@ -692,7 +692,7 @@ public static void main(String[] args) {
 
 
 
-<b style="color:red;">对于第三种方式，需要创建两种Bean，显然有点鸡肋，因此Spring专门针对其进行了改良</b>
+<b style="color:red;">对于第三种方式，需要创建两种Bean，显然有点鸡肋，因此Spring专门针对其进行了改良（重要）</b>
 
 首先我们需要创建一个 `UserDaoFactoryBean` 并实现 `FactoryBean` 接口及其中的方法
 
@@ -742,10 +742,10 @@ public static void main(String[] args) {
 
     // 通过Spring创建实例工厂对象
     ApplicationContext context = new ClassPathXmlApplicationContext("applicationContext.xml");
-    UserDao userDao = (UserDao) context.getBean("userDao");
+    UserDao userDao = (UserDao) context.getBean("userDao2");
     userDao.save();
 
-    UserDao userDao2 = (UserDao) context.getBean("userDao");
+    UserDao userDao2 = (UserDao) context.getBean("userDao2");
     System.out.println(userDao);
     System.out.println(userDao2);
 
@@ -760,6 +760,119 @@ public static void main(String[] args) {
 
 通过实现 `FactoryBean` 中的 *isSingleton* 方法，可以配置创建的Bean对象是否为单例的
 
+```java
+// 配置Bean对象是否为单例
+public boolean isSingleton() {
+    return false;
+}
+```
+
+重新执行main方法，查看控制台打印
+
+![Spring基于实例工厂改良的方式创建非单例Bean对象实例](./images/Spring基于实例工厂改良的方式创建非单例Bean对象实例.png)
 
 
-https://www.bilibili.com/video/BV1Fi4y1S7ix/?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=11
+
+#### 5、Bean的生命周期
+
+生命周期：从创建到消亡的完整过程
+
+Bean生命周期：Bean从创建到销毁的整体过程
+
+Bean生命周期控制：在Bean创建后到销毁前做一些事情
+
+
+
+创建一个新的项目工程`bean_lifecycle`
+
+![Bean生命周期-创建项目工程](./images/Bean生命周期-创建项目工程.png)
+
+项目基本代码内容如下：
+
+`BookDao`
+
+```java
+package com.stone.dao;
+
+public interface BookDao {
+
+    void save();
+}
+```
+
+`BookDaoImpl`
+
+```java
+package com.stone.dao.impl;
+
+import com.stone.dao.BookDao;
+
+public class BookDaoImpl implements BookDao {
+
+    public void save() {
+        System.out.println("book dao save ...");
+    }
+}
+```
+
+`BookService`
+
+```java
+package com.stone.service;
+
+public interface BookService {
+
+    void save();
+}
+```
+
+`BookServiceImpl`
+
+```java
+package com.stone.service.impl;
+
+import com.stone.dao.BookDao;
+import com.stone.service.BookService;
+
+public class BookServiceImpl implements BookService {
+
+    private BookDao bookDao;
+
+    public void setBookDao(BookDao bookDao) {
+        this.bookDao = bookDao;
+    }
+
+    public void save() {
+        bookDao.save();
+        System.out.println("book service save ...");
+    }
+}
+```
+
+`applicationContext.xml`
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <!--配置Bean-->
+    <bean id="bookDao" class="com.stone.dao.impl.BookDaoImpl"/>
+    <bean id="bookService" class="com.stone.service.impl.BookServiceImpl">
+        <property name="bookDao" ref="bookDao"/>
+    </bean>
+</beans>
+```
+
+main方法：只引入了Dao对象，并未引入Service对象
+
+```java
+public static void main(String[] args) {
+    ApplicationContext context = new ClassPathXmlApplicationContext("applicationContext.xml");
+    BookDao bookDao = (BookDao) context.getBean("bookDao");
+    bookDao.save();
+}
+```
+
+https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=12

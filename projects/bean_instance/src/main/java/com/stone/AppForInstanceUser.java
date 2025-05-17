@@ -16,10 +16,10 @@ public class AppForInstanceUser {
 
         // 通过Spring创建实例工厂对象
         ApplicationContext context = new ClassPathXmlApplicationContext("applicationContext.xml");
-        UserDao userDao = (UserDao) context.getBean("userDao");
+        UserDao userDao = (UserDao) context.getBean("userDao2");
         userDao.save();
 
-        UserDao userDao2 = (UserDao) context.getBean("userDao");
+        UserDao userDao2 = (UserDao) context.getBean("userDao2");
         System.out.println(userDao);
         System.out.println(userDao2);
 

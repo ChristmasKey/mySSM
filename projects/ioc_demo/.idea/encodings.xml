@@ -5,6 +5,8 @@
     <file url="file://$PROJECT_DIR$/../base_config/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/../bean_instance/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/../bean_instance/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/../bean_lifecycle/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/../bean_lifecycle/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/src/main/resources" charset="UTF-8" />
   </component>
