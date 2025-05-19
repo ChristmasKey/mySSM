@@ -4,7 +4,7 @@
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
 
     <!--配置Bean-->
-    <bean id="bookDao" class="com.stone.dao.impl.BookDaoImpl"/>
+    <bean id="bookDao" class="com.stone.dao.impl.BookDaoImpl" init-method="init" destroy-method="destroy"/>
     <bean id="bookService" class="com.stone.service.impl.BookServiceImpl">
         <property name="bookDao" ref="bookDao"/>
     </bean>

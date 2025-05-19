@@ -875,4 +875,53 @@ public static void main(String[] args) {
 }
 ```
 
-https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=12
+
+
+我们尝试一下控制Dao对象的生命周期，在`BookDaoImpl`中新建两个方法
+
+```java
+// 表示Bean初始化对应的操作
+public void init() {
+    System.out.println("init...");
+}
+
+// 表示Bean销毁前对应的操作
+public void destroy() {
+    System.out.println("destroy...");
+}
+```
+
+并将这两个方法配置到`applicationContext.xml`中
+
+```xml
+<bean id="bookDao" class="com.stone.dao.impl.BookDaoImpl" init-method="init" destroy-method="destroy"/>
+```
+
+执行main方法后，结果如下
+
+![Bean的生命周期方法运行结果](./images/Bean的生命周期方法运行结果.png)
+
+显然，*destroy()* 方法并未被执行，这是因为在上面的代码中，程序执行完成后，JVM虚拟机会直接退出，并没有给Bean留出销毁的时间。
+
+因此，如果想让 *destroy()* 方法执行，我们可以在虚拟机退出之前将IoC容器关闭：
+
+修改main方法中的代码，将 `ApplicationContext` 类型替换为 `ClassPathXmlApplicationContext` 类型，并调用其 *close()* 方法
+
+```java
+public static void main(String[] args) {
+    // 转换IoC容器的接收类型
+    ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("applicationContext.xml");
+    BookDao bookDao = (BookDao) context.getBean("bookDao");
+    bookDao.save();
+    // 手动关闭IoC容器
+    context.close();
+}
+```
+
+重新执行main方法后，结果如下
+
+![Bean的生命周期方法运行结果1](./images/Bean的生命周期方法运行结果1.png)
+
+
+
+https://www.bilibili.com/video/BV1Fi4y1S7ix/?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=12
