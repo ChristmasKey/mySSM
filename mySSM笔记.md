@@ -877,6 +877,8 @@ public static void main(String[] args) {
 
 
 
+##### 配置形式控制生命周期
+
 我们尝试一下控制Dao对象的生命周期，在`BookDaoImpl`中新建两个方法
 
 ```java
@@ -922,6 +924,66 @@ public static void main(String[] args) {
 
 ![Bean的生命周期方法运行结果1](./images/Bean的生命周期方法运行结果1.png)
 
+上面的关闭容器操作是一种**暴力关闭**的方式，我们还有一种更优雅的方式来关闭IoC容器：在main方法中<i style="color:red;">设置关闭钩子</i>
 
+```java
+package com.stone;
+
+import com.stone.dao.BookDao;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+
+public class AppForLifeCycle {
+
+    public static void main(String[] args) {
+        // 转换IoC容器的接收类型
+        ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("applicationContext.xml");
+        BookDao bookDao = (BookDao) context.getBean("bookDao");
+        bookDao.save();
+        // 注册关闭钩子
+        context.registerShutdownHook(); // 在创建context后，随时都可以调用
+        // 手动关闭IoC容器
+        //context.close(); // 只能在代码执行的最后调用
+    }
+}
+```
+
+
+
+##### 接口形式控制生命周期
+
+为了简化配置，Spring还提供了接口的形式来控制Bean的生命周期。接下来，我们尝试一下用这种形式来控制Service对象的生命周期。
+
+在`BookServiceImpl`中实现两个接口 `InitializingBean` 和 `DisposableBean` 并分别实现其中的方法 **destroy()** 和 **afterPropertiesSet()**：
+
+```java
+package com.stone.service.impl;
+
+import com.stone.dao.BookDao;
+import com.stone.service.BookService;
+import org.springframework.beans.factory.DisposableBean;
+import org.springframework.beans.factory.InitializingBean;
+
+public class BookServiceImpl implements BookService, InitializingBean, DisposableBean {
+
+    private BookDao bookDao;
+
+    public void setBookDao(BookDao bookDao) {
+        this.bookDao = bookDao;
+    }
+
+    public void save() {
+        bookDao.save();
+        System.out.println("book service save ...");
+    }
+
+    public void destroy() throws Exception {
+        System.out.println("service destroy ...");
+    }
+
+    public void afterPropertiesSet() throws Exception {
+        System.out.println("service init ...");
+    }
+}
+```
 
 https://www.bilibili.com/video/BV1Fi4y1S7ix/?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=12
