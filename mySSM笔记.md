@@ -986,4 +986,53 @@ public class BookServiceImpl implements BookService, InitializingBean, Disposabl
 }
 ```
 
-https://www.bilibili.com/video/BV1Fi4y1S7ix/?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=12
+main方法中的内容保持不变，重新执行，结果如下
+
+![Bean的生命周期方法运行结果2](./images/Bean的生命周期方法运行结果2.png)
+
+<span style="color:red;">注意：虽然Service对象并没有在main方法中被调用，但是会被加载到IoC容器中，所以它的生命周期方法也会执行</span>
+
+
+
+<span style="color:red;">关于方法 **afterPropertiesSet()** 的细节</span>：从名字上就可以看出，它会在Bean对象中的属性全部设置好之后再运行。
+
+修改 `BookServiceImpl` 类中的 Dao对象setter方法
+
+```java
+public void setBookDao(BookDao bookDao) {
+    System.out.println("setBookDao...");
+    this.bookDao = bookDao;
+}
+```
+
+重新执行main方法后，结果如下
+
+![Bean的生命周期方法运行结果3](./images/Bean的生命周期方法运行结果3.png)
+
+
+
+##### 生命周期中各阶段操作
+
+- 初始化容器
+
+    1.创建对象（内存分配）
+
+    2.执行构造方法
+
+    3.执行属性输入（set操作）
+
+    <span style="color:blue;">4.执行Bean初始化方法</span>
+
+- 使用Bean
+
+    1.执行业务操作
+
+- 关闭/销毁容器
+
+    <span style="color:blue;">1.执行Bean销毁方法</span>
+
+
+
+#### 6、依赖注入方式
+
+https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=13
