@@ -1035,4 +1035,580 @@ public void setBookDao(BookDao bookDao) {
 
 #### 6、依赖注入方式
 
-https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=13
+思考：向一个类中传递数据的方式有几种？
+
+- 普通方法（setter）
+- 构造方法
+
+思考：依赖注入描述了在容器中建立Bean与Bean之间依赖关系的过程，如果Bean运行需要的是数字或字符串呢？
+
+将依赖注入的数据按类型进行分类：
+
+- 引用类型
+- 简单类型（包括基本类型和String）
+
+
+
+<span style="color:red;">综上，依赖注入的方式有以下几种：</span>
+
+- setter注入
+    - 简单类型
+    - 引用类型（之前使用的都是这种方法）
+- 构造器注入
+    - 简单类型
+    - 引用类型
+
+
+
+##### setter注入
+
+创建一个新的项目工程`di_set`
+
+![依赖注入set方式-创建项目工程](./images/依赖注入set方式-创建项目工程.png)
+
+项目基本代码内容如下：
+
+`BookDao`
+
+```java
+package com.stone.dao;
+
+public interface BookDao {
+
+    void save();
+}
+```
+
+`BookDaoImpl`
+
+```java
+package com.stone.dao.impl;
+
+import com.stone.dao.BookDao;
+
+public class BookDaoImpl implements BookDao {
+
+    @Override
+    public void save() {
+        System.out.println("book dao save...");
+    }
+}
+```
+
+`BookService`
+
+```java
+package com.stone.service;
+
+public interface BookService {
+
+    void save();
+}
+```
+
+`BookServiceImpl`
+
+```java
+package com.stone.service.impl;
+
+import com.stone.dao.BookDao;
+import com.stone.dao.UserDao;
+import com.stone.service.BookService;
+
+public class BookServiceImpl implements BookService {
+
+    private BookDao bookDao;
+
+    public void setBookDao(BookDao bookDao) {
+        this.bookDao = bookDao;
+    }
+
+    @Override
+    public void save() {
+        System.out.println("book service save...");
+        bookDao.save();
+    }
+}
+```
+
+`applicationContext.xml`
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <bean id="bookDao" class="com.stone.dao.impl.BookDaoImpl"/>
+    <bean id="bookService" class="com.stone.service.impl.BookServiceImpl">
+        <property name="bookDao" ref="bookDao"/>
+    </bean>
+</beans>
+```
+
+main方法：
+
+```java
+package com.stone;
+
+import com.stone.service.BookService;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+
+public class AppForDISet
+{
+    public static void main(String[] args) {
+        ApplicationContext context = new ClassPathXmlApplicationContext("applicationContext.xml");
+        BookService bookService = (BookService) context.getBean("bookService");
+        bookService.save();
+    }
+}
+```
+
+
+
+**setter注入引用类型**：向`BookService`中注入`UserDao`
+
+`UserDao`
+
+```java
+package com.stone.dao;
+
+public interface UserDao {
+
+    void save();
+}
+```
+
+`UserDaoImpl`
+
+```java
+package com.stone.dao.impl;
+
+import com.stone.dao.UserDao;
+
+public class UserDaoImpl implements UserDao {
+
+    @Override
+    public void save() {
+        System.out.println("user dao save...");
+    }
+}
+```
+
+`BookServiceImpl`
+
+```java
+package com.stone.service.impl;
+
+import com.stone.dao.BookDao;
+import com.stone.dao.UserDao;
+import com.stone.service.BookService;
+
+public class BookServiceImpl implements BookService {
+
+    private BookDao bookDao;
+    private UserDao userDao;
+
+    public void setBookDao(BookDao bookDao) {
+        this.bookDao = bookDao;
+    }
+
+    public void setUserDao(UserDao userDao) {
+        this.userDao = userDao;
+    }
+
+    @Override
+    public void save() {
+        System.out.println("book service save...");
+        bookDao.save();
+        userDao.save();
+    }
+}
+```
+
+`applicationContext.xml`
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <bean id="userDao" class="com.stone.dao.impl.UserDaoImpl"/>
+    <bean id="bookDao" class="com.stone.dao.impl.BookDaoImpl"/>
+
+    <bean id="bookService" class="com.stone.service.impl.BookServiceImpl">
+        <property name="bookDao" ref="bookDao"/>
+        <property name="userDao" ref="userDao"/>
+    </bean>
+</beans>
+```
+
+最终运行结果如下：
+
+![setter注入引用类型运行结果](./images/setter注入引用类型运行结果.png)
+
+
+
+**setter注入简单类型**：向`BookDao`中注入简单类型
+
+`BookDaoImpl`
+
+```java
+package com.stone.dao.impl;
+
+import com.stone.dao.BookDao;
+
+public class BookDaoImpl implements BookDao {
+
+    private int connectionNum;
+
+    private String databaseName;
+
+    public void setConnectionNum(int connectionNum) {
+        this.connectionNum = connectionNum;
+    }
+
+    public void setDatabaseName(String databaseName) {
+        this.databaseName = databaseName;
+    }
+
+    @Override
+    public void save() {
+        System.out.println("book dao save..." + connectionNum + "; " + databaseName);
+    }
+}
+```
+
+`applicationContext.xml`
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <bean id="userDao" class="com.stone.dao.impl.UserDaoImpl"/>
+    <bean id="bookDao" class="com.stone.dao.impl.BookDaoImpl">
+        <!--使用value属性向Bean中注入简单类型依赖-->
+        <property name="connectionNum" value="10"/>
+        <property name="databaseName" value="mysql"/>
+    </bean>
+
+    <bean id="bookService" class="com.stone.service.impl.BookServiceImpl">
+        <property name="bookDao" ref="bookDao"/>
+        <property name="userDao" ref="userDao"/>
+    </bean>
+</beans>
+```
+
+最终运行结果如下：
+
+![setter注入简单类型运行结果](./images/setter注入简单类型运行结果.png)
+
+
+
+##### 构造器注入
+
+创建一个新的项目工程`di_constructor`
+
+![依赖注入构造器方式-创建项目工程](./images/依赖注入构造器方式-创建项目工程.png)
+
+项目基本代码内容如下：
+
+`BookDao`
+
+```java
+package com.stone.dao;
+
+public interface BookDao {
+
+    void save();
+}
+```
+
+`BookDaoImpl`
+
+```java
+package com.stone.dao.impl;
+
+import com.stone.dao.BookDao;
+
+public class BookDaoImpl implements BookDao {
+
+    private int connectionNum;
+
+    private String databaseName;
+
+    @Override
+    public void save() {
+        System.out.println("book dao save...");
+    }
+}
+```
+
+`UserDao`
+
+```java
+package com.stone.dao;
+
+public interface UserDao {
+
+    void save();
+}
+```
+
+`UserDaoImpl`
+
+```java
+package com.stone.dao.impl;
+
+import com.stone.dao.UserDao;
+
+public class UserDaoImpl implements UserDao {
+
+    @Override
+    public void save() {
+        System.out.println("user dao save...");
+    }
+}
+```
+
+`BookService`
+
+```java
+package com.stone.service;
+
+public interface BookService {
+
+    void save();
+}
+```
+
+`BookServiceImpl`
+
+```java
+package com.stone.service.impl;
+
+import com.stone.dao.BookDao;
+import com.stone.service.BookService;
+
+public class BookServiceImpl implements BookService {
+
+    private BookDao bookDao;
+
+    public void setBookDao(BookDao bookDao) {
+        this.bookDao = bookDao;
+    }
+
+    @Override
+    public void save() {
+        System.out.println("book service save...");
+        bookDao.save();
+    }
+}
+```
+
+`applicationContext.xml`
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <bean id="bookDao" class="com.stone.dao.impl.BookDaoImpl"/>
+
+    <bean id="bookService" class="com.stone.service.impl.BookServiceImpl">
+        <property name="bookDao" ref="bookDao"/>
+    </bean>
+</beans>
+```
+
+main方法
+
+```java
+package com.stone;
+
+import com.stone.service.BookService;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+
+public class AppForConstructor {
+
+    public static void main(String[] args) {
+        ApplicationContext context = new ClassPathXmlApplicationContext("applicationContext.xml");
+        BookService bookService = context.getBean("bookService", BookService.class);
+        bookService.save();
+    }
+}
+```
+
+
+
+**使用构造器注入方法注入两种类型的依赖**：
+
+1、修改`BookServiceImpl`类，将set方法替换为带参构造方法
+
+```java
+package com.stone.service.impl;
+
+import com.stone.dao.BookDao;
+import com.stone.service.BookService;
+
+public class BookServiceImpl implements BookService {
+
+    private BookDao bookDao;
+
+    //public void setBookDao(BookDao bookDao) {
+    //    this.bookDao = bookDao;
+    //}
+
+    public BookServiceImpl(BookDao bookDao) {
+        this.bookDao = bookDao;
+    }
+
+    @Override
+    public void save() {
+        System.out.println("book service save...");
+        bookDao.save();
+    }
+}
+```
+
+
+
+2、修改`applicationContext.xml`，使用<span style="color:red;">`constructor-arg`</span>标签进行依赖注入
+
+<span style="color:red;">注意</span>：`constructor-tag`标签中的`name`属性值映射的是构造方法中的**形参名**！<span style="color:red;">由此可见，构造器注入方式和代码的耦合度较高</span>
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <bean id="bookDao" class="com.stone.dao.impl.BookDaoImpl"/>
+
+    <bean id="bookService" class="com.stone.service.impl.BookServiceImpl">
+        <constructor-arg name="bookDao" ref="bookDao"/>
+    </bean>
+</beans>
+```
+
+
+
+3、如果要继续注入其他依赖的话，则需要重新修改构造方法和配置文件
+
+`BookServiceImpl`
+
+```java
+package com.stone.service.impl;
+
+import com.stone.dao.BookDao;
+import com.stone.dao.UserDao;
+import com.stone.service.BookService;
+
+public class BookServiceImpl implements BookService {
+
+    private BookDao bookDao;
+
+    private UserDao userDao;
+
+    public BookServiceImpl(BookDao bookDao, UserDao userDao) {
+        this.bookDao = bookDao;
+        this.userDao = userDao;
+    }
+
+    @Override
+    public void save() {
+        System.out.println("book service save...");
+        bookDao.save();
+        userDao.save();
+    }
+}
+```
+
+`applicationContext.xml`
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <bean id="bookDao" class="com.stone.dao.impl.BookDaoImpl"/>
+    <bean id="userDao" class="com.stone.dao.impl.UserDaoImpl"/>
+
+    <bean id="bookService" class="com.stone.service.impl.BookServiceImpl">
+        <constructor-arg name="bookDao" ref="bookDao"/>
+        <constructor-arg name="userDao" ref="userDao"/>
+    </bean>
+</beans>
+```
+
+最终运行结果如下：
+
+![构造器注入引用类型运行结果](./images/构造器注入引用类型运行结果.png)
+
+
+
+4、使用构造器注入简单类型
+
+`BookDaoImpl`
+
+```java
+package com.stone.dao.impl;
+
+import com.stone.dao.BookDao;
+
+public class BookDaoImpl implements BookDao {
+
+    private final int connectionNum;
+
+    private final String databaseName;
+
+    public BookDaoImpl(int connectionNum, String databaseName) {
+        this.connectionNum = connectionNum;
+        this.databaseName = databaseName;
+    }
+
+    @Override
+    public void save() {
+        System.out.println("book dao save..." + connectionNum + "; " + databaseName);
+    }
+}
+```
+
+`applicationContext.xml`
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <bean id="bookDao" class="com.stone.dao.impl.BookDaoImpl">
+        <constructor-arg name="connectionNum" value="10"/>
+        <constructor-arg name="databaseName" value="mysql"/>
+    </bean>
+
+    <bean id="userDao" class="com.stone.dao.impl.UserDaoImpl"/>
+
+    <bean id="bookService" class="com.stone.service.impl.BookServiceImpl">
+        <constructor-arg name="bookDao" ref="bookDao"/>
+        <constructor-arg name="userDao" ref="userDao"/>
+    </bean>
+</beans>
+```
+
+最终运行结果如下：
+
+![构造器注入简单类型运行结果](./images/构造器注入简单类型运行结果.png)
+
+
+
+###### 解耦合
+
+https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=14

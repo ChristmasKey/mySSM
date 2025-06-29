@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <bean id="bookDao" class="com.stone.dao.impl.BookDaoImpl">
+        <constructor-arg name="connectionNum" value="10"/>
+        <constructor-arg name="databaseName" value="mysql"/>
+    </bean>
+
+    <bean id="userDao" class="com.stone.dao.impl.UserDaoImpl"/>
+
+    <bean id="bookService" class="com.stone.service.impl.BookServiceImpl">
+        <constructor-arg name="bookDao" ref="bookDao"/>
+        <constructor-arg name="userDao" ref="userDao"/>
+    </bean>
+</beans>
