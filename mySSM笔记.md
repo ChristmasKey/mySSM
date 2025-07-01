@@ -1607,8 +1607,74 @@ public class BookDaoImpl implements BookDao {
 
 ![构造器注入简单类型运行结果](./images/构造器注入简单类型运行结果.png)
 
+<span style="color:red;">拓展Tips：通过调整`applicationContext.xml`文件中`constructor-arg`标签的顺序位置并不会影响程序的运行。</span>
 
 
-###### 解耦合
 
-https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=14
+###### 解耦合（了解）
+
+通过构造器注入依赖的方式与代码耦合度较高，因为是通过**形参**进行属性值映射的。
+
+一旦形参名被更改，配置就会失效。为了解耦合，现有以下两种方式：
+
+1、**用参数类型代替参数名**
+
+```xml
+<!--解耦合：指定形参类型-->
+<bean id="bookDao" class="com.stone.dao.impl.BookDaoImpl">
+    <constructor-arg type="int" value="10"/>
+    <constructor-arg type="java.lang.String" value="mysql"/>
+</bean>
+```
+
+**这种方式的缺点**：当出现重复的参数类型时，无法准确映射
+
+
+
+2、**用参数索引代替参数名**
+
+```xml
+<!--解耦合：指定形参索引-->
+<bean id="bookDao" class="com.stone.dao.impl.BookDaoImpl">
+    <constructor-arg index="0" value="10"/>
+    <constructor-arg index="1" value="mysql"/>
+</bean>
+```
+
+https://www.bilibili.com/video/BV1Fi4y1S7ix/?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=14
+
+
+
+##### 方式选择
+
+两种依赖注入的方式我们应该如何选择使用？
+
+1、强制依赖（Bean所必须的依赖）使用构造器注入，使用setter注入有概率不进行注入导致null对象出现
+
+2、可选依赖使用setter进行注入，灵活性强
+
+3、Spring框架倡导使用构造器，第三方框架内部大多数采用构造器注入的形式进行Bean的初始化，相对严谨
+
+4、如果有必要可以两者同时使用，使用构造器注入完成强制依赖的注入，使用setter注入完成可选依赖的注入
+
+5、实际开发过程中还要根据实际情况具体分析，如果受控对象没有提供setter方法就必须使用构造器注入
+
+6、<span style="color:red;">自己开发的模块推荐使用setter注入</span>
+
+
+
+### 依赖自动装配
+
+IoC容器根据Bean所依赖的资源在容器中自动查找并注入到Bean中的过程称为**自动装配**。
+
+自动装配方式
+
+- <span style="color:red;">按类型（常用）</span>
+- 按名称
+- 按构造方法
+
+
+
+创建一个新的项目工程`di_autoware`
+
+https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=15

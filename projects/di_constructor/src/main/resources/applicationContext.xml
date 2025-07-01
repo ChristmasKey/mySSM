@@ -9,10 +9,22 @@
     <!--    <constructor-arg name="databaseName" value="mysql"/>-->
     <!--</bean>-->
 
-    <!--<bean id="userDao" class="com.stone.dao.impl.UserDaoImpl"/>-->
-
-    <!--<bean id="bookService" class="com.stone.service.impl.BookServiceImpl">-->
-    <!--    <constructor-arg name="bookDao" ref="bookDao"/>-->
-    <!--    <constructor-arg name="userDao" ref="userDao"/>-->
+    <!--解耦合：指定形参类型-->
+    <!--<bean id="bookDao" class="com.stone.dao.impl.BookDaoImpl">-->
+    <!--    <constructor-arg type="int" value="10"/>-->
+    <!--    <constructor-arg type="java.lang.String" value="mysql"/>-->
     <!--</bean>-->
+
+    <!--解耦合：指定形参索引-->
+    <bean id="bookDao" class="com.stone.dao.impl.BookDaoImpl">
+        <constructor-arg index="0" value="10"/>
+        <constructor-arg index="1" value="mysql"/>
+    </bean>
+
+    <bean id="userDao" class="com.stone.dao.impl.UserDaoImpl"/>
+
+    <bean id="bookService" class="com.stone.service.impl.BookServiceImpl">
+        <constructor-arg name="bookDao" ref="bookDao"/>
+        <constructor-arg name="userDao" ref="userDao"/>
+    </bean>
 </beans>
