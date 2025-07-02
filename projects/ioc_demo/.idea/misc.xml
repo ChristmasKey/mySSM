@@ -10,6 +10,7 @@
         <option value="$PROJECT_DIR$/../bean_lifecycle/pom.xml" />
         <option value="$PROJECT_DIR$/../di_set/pom.xml" />
         <option value="$PROJECT_DIR$/../di_constructor/pom.xml" />
+        <option value="$PROJECT_DIR$/../di_autoware/pom.xml" />
       </list>
     </option>
   </component>

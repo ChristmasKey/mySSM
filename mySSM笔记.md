@@ -1641,8 +1641,6 @@ public class BookDaoImpl implements BookDao {
 </bean>
 ```
 
-https://www.bilibili.com/video/BV1Fi4y1S7ix/?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=14
-
 
 
 ##### 方式选择
@@ -1672,9 +1670,143 @@ IoC容器根据Bean所依赖的资源在容器中自动查找并注入到Bean中
 - <span style="color:red;">按类型（常用）</span>
 - 按名称
 - 按构造方法
+- 不使用自动装配
 
 
 
 创建一个新的项目工程`di_autoware`
 
-https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=15
+![依赖自动装配-创建项目工程](./images/依赖自动装配-创建项目工程.png)
+
+项目基本代码内容如下：
+
+`BookDao`
+
+```java
+package com.stone.dao;
+
+public interface BookDao {
+
+    void save();
+}
+```
+
+`BookDaoImpl`
+
+```java
+package com.stone.dao.impl;
+
+import com.stone.dao.BookDao;
+
+public class BookDaoImpl implements BookDao {
+
+    @Override
+    public void save() {
+        System.out.println("book dao save...");
+    }
+}
+```
+
+`BookService`
+
+```java
+package com.stone.service;
+
+public interface BookService {
+
+    void save();
+}
+```
+
+`BookServiceImpl`
+
+```java
+package com.stone.service.impl;
+
+import com.stone.dao.BookDao;
+import com.stone.service.BookService;
+
+public class BookServiceImpl implements BookService {
+
+    private BookDao bookDao;
+
+    public void setBookDao(BookDao bookDao) {
+        this.bookDao = bookDao;
+    }
+
+    @Override
+    public void save() {
+        System.out.println("book service save...");
+        bookDao.save();
+    }
+}
+```
+
+`applicationContext.xml`
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <bean id="bookDao" class="com.stone.dao.impl.BookDaoImpl"/>
+
+    <bean id="bookService" class="com.stone.service.impl.BookServiceImpl"/>
+</beans>
+```
+
+<span style="color:red;">可以注意到：这次的配置文件中并没有直接声明两个bean的依赖关系，**接下来将使用自动装配实现依赖的自动注入**</span>
+
+main方法
+
+```java
+package com.stone;
+
+import com.stone.dao.BookDao;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+
+public class AppForDIAutoware {
+
+    public static void main(String[] args) {
+        ApplicationContext context = new ClassPathXmlApplicationContext("applicationContext.xml");
+        BookDao bookDao = (BookDao) context.getBean("bookDao");
+        bookDao.save();
+    }
+}
+```
+
+
+
+<span style="color:red;">实现自动装配的方式就是在bean标签中使用`autowire`属性</span>：
+
+```xml
+<bean id="bookService" class="com.stone.service.impl.BookServiceImpl" autowire="byType"/>
+```
+
+最终运行结果如下：
+
+![依赖自动装配运行结果](./images/依赖自动装配运行结果.png)
+
+
+
+其中 `autowire` 属性有两个常用的值：
+
+- **byType**：根据类型自动装配
+- **byName**：根据setter名称自动装配
+
+
+
+<span style="color:red;">依赖自动装配的特征</span>：
+
+- 自动装配用于引用类型的依赖注入，不能对简单类型进行操作
+- 使用按类型装配时（byType）必须保障容器中相同类型的bean唯一，推荐使用
+- 使用按名称装配时（byName）必须保障容器中具有指定名称的bean，因变量名与配置耦合，不推荐使用
+- <span style="color:blue;">自动装配优先级低于setter注入和构造器注入，同时出现时自动装配配置失效</span>
+
+
+
+### 集合注入
+
+https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=16
