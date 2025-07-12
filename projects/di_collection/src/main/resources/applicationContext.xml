@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <bean id="bookDao" class="com.stone.dao.impl.BookDaoImpl">
+        <property name="arrName">
+            <array>
+                <value>100</value>
+                <value>200</value>
+                <value>300</value>
+                <!--对于引用类型的集合对象如User数组，使用ref标签注入User-->
+                <!--<ref bean="bookDao"/>-->
+            </array>
+        </property>
+        <property name="listName">
+            <list>
+                <value>SKT</value>
+                <value>RNG</value>
+                <value>FPX</value>
+            </list>
+        </property>
+        <property name="setName">
+            <set>
+                <!--Set会自动去重-->
+                <value>Faker</value>
+                <value>Faker</value>
+                <value>MLXG</value>
+                <value>Doinb</value>
+            </set>
+        </property>
+        <property name="mapName">
+            <map>
+                <entry key="country" value="China"/>
+                <entry key="province" value="JiangSu"/>
+                <entry key="city" value="NanJing"/>
+            </map>
+        </property>
+        <property name="propertiesName">
+            <props>
+                    <prop key="username">root</prop>
+                    <prop key="password">123456</prop>
+            </props>
+        </property>
+    </bean>
+</beans>

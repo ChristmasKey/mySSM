@@ -1809,4 +1809,334 @@ public class AppForDIAutoware {
 
 ### 集合注入
 
-https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=16
+<span style="color:red;">集合主要有：数组、List、Set、Map、Properties</span>
+
+创建一个新的项目工程`di_collection`
+
+![集合注入-创建项目工程](./images/集合注入-创建项目工程.png)
+
+项目基本代码内容如下：
+
+`BookDao`
+
+```java
+package com.stone.dao;
+
+public interface BookDao {
+    void save();
+}
+```
+
+`BookDaoImpl`
+
+```java
+package com.stone.dao.impl;
+
+import com.stone.dao.BookDao;
+
+import java.util.*;
+
+public class BookDaoImpl implements BookDao {
+
+    private int[] arr;
+
+    private List<String> list;
+
+    private Set<String> set;
+
+    private Map<String, String> map;
+
+    private Properties properties;
+
+    public void setArr(int[] arr) {
+        this.arr = arr;
+    }
+
+    public void setList(List<String> list) {
+        this.list = list;
+    }
+
+    public void setSet(Set<String> set) {
+        this.set = set;
+    }
+
+    public void setMap(Map<String, String> map) {
+        this.map = map;
+    }
+
+    public void setProperties(Properties properties) {
+        this.properties = properties;
+    }
+
+    @Override
+    public void save() {
+        System.out.println("book dao save...");
+
+        System.out.println("遍历 数组：" + Arrays.toString(arr));
+        System.out.println("遍历 List：" + list);
+        System.out.println("遍历 Set：" + set);
+        System.out.println("遍历 Map：" + map);
+        System.out.println("遍历 Properties：" + properties);
+    }
+}
+```
+
+`applicationContext.xml`
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <bean id="bookDao" class="com.stone.dao.impl.BookDaoImpl"/>
+</beans>
+```
+
+main方法
+
+```java
+package com.stone;
+
+import com.stone.dao.BookDao;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+
+public class AppForDICollection {
+    public static void main(String[] args) {
+        ApplicationContext context = new ClassPathXmlApplicationContext("applicationContext.xml");
+
+        BookDao bookDao = context.getBean("bookDao", BookDao.class);
+
+        bookDao.save();
+    }
+}
+```
+
+
+
+<b style="color:red;">接下来需要到配置文件中配置几种类型的注入：</b>
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <bean id="bookDao" class="com.stone.dao.impl.BookDaoImpl">
+        <property name="arrName">
+            <array>
+                <value>100</value>
+                <value>200</value>
+                <value>300</value>
+                <!--对于引用类型的集合对象如User数组，使用ref标签注入User-->
+                <!--<ref bean="bookDao"/>-->
+            </array>
+        </property>
+        <property name="listName">
+            <list>
+                <value>SKT</value>
+                <value>RNG</value>
+                <value>FPX</value>
+            </list>
+        </property>
+        <property name="setName">
+            <set>
+                <!--Set会自动去重-->
+                <value>Faker</value>
+                <value>Faker</value>
+                <value>MLXG</value>
+                <value>Doinb</value>
+            </set>
+        </property>
+        <property name="mapName">
+            <map>
+                <entry key="country" value="China"/>
+                <entry key="province" value="JiangSu"/>
+                <entry key="city" value="NanJing"/>
+            </map>
+        </property>
+        <property name="propertiesName">
+            <props>
+                    <prop key="username">root</prop>
+                    <prop key="password">123456</prop>
+            </props>
+        </property>
+    </bean>
+</beans>
+```
+
+最终运行结果如下：
+
+![集合注入的运行结果](./images/集合注入的运行结果.png)
+
+
+
+### 案例：数据源对象管理
+
+<span style="color:red;">在项目配置文件中管理第三方的Bean</span>
+
+创建一个新的项目工程`datasource_manage`
+
+![数据源对象管理案例-创建项目工程](./images/数据源对象管理案例-创建项目工程.png)
+
+项目代码基本内容如下：
+
+`applicationContext.xml`
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+</beans>
+```
+
+main方法
+
+```java
+package com.stone;
+
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+
+public class AppForDatasourceManage {
+    public static void main(String[] args) {
+        ApplicationContext context = new ClassPathXmlApplicationContext("applicationContext.xml");
+    }
+}
+```
+
+
+
+#### Druid
+
+首先要在项目中引入第三方的依赖
+
+`pom.xml`
+
+```xml
+<!--Druid数据源-->
+<dependency>
+    <groupId>com.alibaba</groupId>
+    <artifactId>druid</artifactId>
+    <version>1.2.23</version>
+</dependency>
+```
+
+然后在项目的配置文件中配置第三方的Bean
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSource">
+        <property name="driverClassName" value="com.mysql.cj.jdbc.Driver"/>
+        <property name="url" value="jdbc:mysql:///test"/>
+        <property name="username" value="root"/>
+        <property name="password" value="1234"/>
+    </bean>
+</beans>
+```
+
+最后在main方法中获取Bean对象并打印
+
+```java
+package com.stone;
+
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+
+import javax.sql.DataSource;
+
+public class AppForDatasourceManage {
+    public static void main(String[] args) {
+        ApplicationContext context = new ClassPathXmlApplicationContext("applicationContext.xml");
+        DataSource dataSource = context.getBean("dataSource", DataSource.class);
+        System.out.println(dataSource);
+    }
+}
+```
+
+最终运行结果如下：
+
+![数据源对象管理案例运行结果1](./images/数据源对象管理案例运行结果1.png)
+
+
+
+#### C3P0
+
+先引入依赖
+
+```xml
+<!--C3P0数据源-->
+<dependency>
+    <groupId>c3p0</groupId>
+    <artifactId>c3p0</artifactId>
+    <version>0.9.1.2</version>
+</dependency>
+<!--MySQL驱动-->
+<dependency>
+    <groupId>mysql</groupId>
+    <artifactId>mysql-connector-java</artifactId>
+    <version>8.0.33</version>
+</dependency>
+```
+
+再修改配置文件
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSource">
+        <property name="driverClassName" value="com.mysql.cj.jdbc.Driver"/>
+        <property name="url" value="jdbc:mysql:///test"/>
+        <property name="username" value="root"/>
+        <property name="password" value="1234"/>
+    </bean>
+
+    <bean id="c3p0DataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource">
+        <property name="driverClass" value="com.mysql.cj.jdbc.Driver"/>
+        <property name="jdbcUrl" value="jdbc:mysql:///c3p0-test"/>
+        <property name="user" value="root"/>
+        <property name="password" value="1234"/>
+    </bean>
+</beans>
+```
+
+再修改main方法
+
+```java
+package com.stone;
+
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+
+import javax.sql.DataSource;
+
+public class AppForDatasourceManage {
+    public static void main(String[] args) {
+        ApplicationContext context = new ClassPathXmlApplicationContext("applicationContext.xml");
+        //DataSource dataSource = context.getBean("dataSource", DataSource.class);
+        //System.out.println(dataSource);
+        DataSource c3poDataSource = context.getBean("c3poDataSource", DataSource.class);
+        System.out.println(c3poDataSource);
+    }
+}
+```
+
+最终运行结果如下：
+
+![数据源对象管理案例运行结果2](./images/数据源对象管理案例运行结果2.png)
+
+
+
+### 加载properties配置信息
+
+https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=18
