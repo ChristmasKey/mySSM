@@ -1,19 +1,41 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/context
+       http://www.springframework.org/schema/context/spring-context.xsd">
 
-    <bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSource">
-        <property name="driverClassName" value="com.mysql.cj.jdbc.Driver"/>
-        <property name="url" value="jdbc:mysql:///test"/>
-        <property name="username" value="root"/>
-        <property name="password" value="1234"/>
+    <!--1.开启context命名空间-->
+    <!--2.使用context空间加载properties文件-->
+    <!--3.使用属性占位符${}读取properties文件中的属性-->
+    <!--<context:property-placeholder location="jdbc.properties" system-properties-mode="NEVER"/>-->
+    <!--当需要加载多个properties文件时，写法如下：-->
+    <!--<context:property-placeholder location="jdbc.properties, jdbc2.properties" system-properties-mode="NEVER"/>-->
+    <!--更规范的写法如下：classpath*表示不仅从项目中读取properties文件，还可以从当前项目中引入的jar包中读取-->
+    <context:property-placeholder location="classpath*:*.properties" system-properties-mode="NEVER"/>
+
+    <bean id="bookDao" class="com.stone.dao.impl.BookDaoImpl">
+        <property name="driverClassName" value="${jdbc.driver}"/>
+        <property name="url" value="${jdbc.url}"/>
+        <property name="username" value="${jdbc.username}"/>
+        <property name="password" value="${jdbc.password}"/>
+        <!--如果不设置system-properties-mode属性，则username的值会优先读取操作系统的系统变量-->
+        <!--<property name="username" value="${username}"/>-->
     </bean>
 
-    <bean id="c3p0DataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource">
-        <property name="driverClass" value="com.mysql.cj.jdbc.Driver"/>
-        <property name="jdbcUrl" value="jdbc:mysql:///c3p0-test"/>
-        <property name="user" value="root"/>
-        <property name="password" value="1234"/>
-    </bean>
+    <!--<bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSource">-->
+    <!--    <property name="driverClassName" value="com.mysql.cj.jdbc.Driver"/>-->
+    <!--    <property name="url" value="jdbc:mysql:///test"/>-->
+    <!--    <property name="username" value="root"/>-->
+    <!--    <property name="password" value="1234"/>-->
+    <!--</bean>-->
+
+    <!--<bean id="c3p0DataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource">-->
+    <!--    <property name="driverClass" value="com.mysql.cj.jdbc.Driver"/>-->
+    <!--    <property name="jdbcUrl" value="jdbc:mysql:///c3p0-test"/>-->
+    <!--    <property name="user" value="root"/>-->
+    <!--    <property name="password" value="1234"/>-->
+    <!--</bean>-->
 </beans>

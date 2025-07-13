@@ -2137,6 +2137,185 @@ public class AppForDatasourceManage {
 
 
 
-### 加载properties配置信息
+#### 加载properties配置信息
 
-https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=18
+<span style="color:red;">我们尝试加载properties文件，并从中读取配置的属性值</span>
+
+首先在`applicationContext.xml`中开启context命名空间；
+
+然后使用context命名标签加载指定的properties文件，并使用`${}`读取加载的属性值；
+
+`jdbc.properties`
+
+```properties
+jdbc.driver=com.mysql.cj.jdbc.Driver
+jdbc.url=jdbc:mysql:///test
+jdbc.username=root
+jdbc.password=1234
+```
+
+`applicationContext.xml`
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/context
+       http://www.springframework.org/schema/context/spring-context.xsd">
+
+    <!--1.开启context命名空间-->
+    <!--2.使用context空间加载properties文件-->
+    <!--3.使用属性占位符${}读取properties文件中的属性-->
+    <context:property-placeholder location="jdbc.properties"/>
+
+    <bean id="bookDao" class="com.stone.dao.impl.BookDaoImpl">
+        <property name="driverClassName" value="${jdbc.driver}"/>
+        <property name="url" value="${jdbc.url}"/>
+        <property name="username" value="${jdbc.username}"/>
+        <property name="password" value="${jdbc.password}"/>
+    </bean>
+
+    <!--<bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSource">-->
+    <!--    <property name="driverClassName" value="com.mysql.cj.jdbc.Driver"/>-->
+    <!--    <property name="url" value="jdbc:mysql:///test"/>-->
+    <!--    <property name="username" value="root"/>-->
+    <!--    <property name="password" value="1234"/>-->
+    <!--</bean>-->
+
+    <!--<bean id="c3p0DataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource">-->
+    <!--    <property name="driverClass" value="com.mysql.cj.jdbc.Driver"/>-->
+    <!--    <property name="jdbcUrl" value="jdbc:mysql:///c3p0-test"/>-->
+    <!--    <property name="user" value="root"/>-->
+    <!--    <property name="password" value="1234"/>-->
+    <!--</bean>-->
+</beans>
+```
+
+接着修改main方法，验证properties中的属性值是否读取成功：
+
+```java
+package com.stone;
+
+import com.stone.dao.BookDao;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+
+import javax.sql.DataSource;
+
+public class AppForDatasourceManage {
+    public static void main(String[] args) {
+        ApplicationContext context = new ClassPathXmlApplicationContext("applicationContext.xml");
+        //DataSource dataSource = context.getBean("dataSource", DataSource.class);
+        //System.out.println(dataSource);
+
+        //DataSource c3poDataSource = context.getBean("c3p0DataSource", DataSource.class);
+        //System.out.println(c3poDataSource);
+
+        BookDao bookDao = context.getBean("bookDao", BookDao.class);
+        bookDao.save();
+    }
+}
+```
+
+`BookDao`
+
+```java
+package com.stone.dao;
+
+public interface BookDao {
+    void save();
+}
+```
+
+`BookDaoImpl`
+
+```java
+package com.stone.dao.impl;
+
+import com.stone.dao.BookDao;
+
+public class BookDaoImpl implements BookDao {
+
+    private String driverClassName;
+    private String url;
+    private String username;
+    private String password;
+
+    public void setDriverClassName(String driverClassName) {
+        this.driverClassName = driverClassName;
+    }
+
+    public void setUrl(String url) {
+        this.url = url;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    @Override
+    public void save() {
+        System.out.println("book dao save...");
+        System.out.println("driverClassName: " + driverClassName);
+        System.out.println("url: " + url);
+        System.out.println("username: " + username);
+        System.out.println("password: " + password);
+    }
+}
+```
+
+最终运行结果如下：
+
+![加载properties文件运行结果](./images/加载properties文件运行结果.png)
+
+
+
+**注意：**
+
+- 不加载系统属性
+
+```xml
+<context:property-placeholder location="jdbc.properties" system-properties-mode="NEVER"/>
+```
+
+
+
+- 加载多个properties文件
+
+```xml
+<!--逗号写法-->
+<context:property-placeholder location="jdbc.properties, jdbc2.properties"/>
+<!--规范写法-->
+<context:property-placeholder location="*.properties"/>
+```
+
+
+
+- 加载所有properties文件
+
+```xml
+<context:property-placeholder location="classpath:*.properties" system-properties-mode="NEVER"/>
+```
+
+
+
+- 从类路径或jar包中搜索并加载properties文件
+
+```xml
+<context:property-placeholder location="classpath*:*.properties" system-properties-mode="NEVER"/>
+```
+
+
+
+
+
+### 容器
+
+https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=19
