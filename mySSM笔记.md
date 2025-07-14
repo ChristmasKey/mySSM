@@ -2316,6 +2316,103 @@ public class BookDaoImpl implements BookDao {
 
 
 
-### 容器
+### 容器操作
 
-https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=19
+创建一个新的项目工程`container`
+
+![容器相关操作-创建项目工程](./images/容器相关操作-创建项目工程.png)
+
+项目代码基本内容如下：
+
+`BookDao`
+
+```java
+package com.stone.dao;
+
+public interface BookDao {
+    void save();
+}
+```
+
+`BookDaoImpl`
+
+```java
+package com.stone.dao.impl;
+
+import com.stone.dao.BookDao;
+
+public class BookDaoImpl implements BookDao {
+    @Override
+    public void save() {
+        System.out.println("book dao save ...");
+    }
+}
+```
+
+`applicationContext.xml`
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <bean id="bookDao" class="com.stone.dao.impl.BookDaoImpl"/>
+</beans>
+```
+
+main方法
+
+```java
+package com.stone;
+
+import com.stone.dao.BookDao;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+
+public class AppForContainer {
+    public static void main(String[] args) {
+        ApplicationContext context = new ClassPathXmlApplicationContext("applicationContext.xml");
+        BookDao bookDao = context.getBean("bookDao", BookDao.class);
+        bookDao.save();
+    }
+}
+```
+
+
+
+有关容器的两个常用操作：
+
+```java
+package com.stone;
+
+import com.stone.dao.BookDao;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+import org.springframework.context.support.FileSystemXmlApplicationContext;
+
+public class AppForContainer {
+    public static void main(String[] args) {
+        //加载配置文件
+        //1.加载类路径下的配置文件
+        ApplicationContext context = new ClassPathXmlApplicationContext("applicationContext.xml");
+        //2.加载文件系统下的配置文件
+        //ApplicationContext context = new FileSystemXmlApplicationContext("D:\\...\\applicationContext.xml");
+        //3.加载多个配置文件
+        //ApplicationContext context = new ClassPathXmlApplicationContext("bean1.xml", "bean2.xml");
+        //ApplicationContext context = new FileSystemXmlApplicationContext("...", "...");
+
+        //获取bean
+        //1.使用Bean名称获取
+        BookDao bookDao = (BookDao) context.getBean("bookDao");
+        //2.使用Bean名称获取并指定类型
+        //BookDao bookDao = context.getBean("bookDao", BookDao.class);
+        //3.使用Bean类型获取
+        //BookDao bookDao = context.getBean(BookDao.class);
+
+        bookDao.save();
+    }
+}
+```
+
+https://www.bilibili.com/video/BV1Fi4y1S7ix/?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=19
