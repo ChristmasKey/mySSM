@@ -2393,7 +2393,7 @@ import org.springframework.context.support.FileSystemXmlApplicationContext;
 
 public class AppForContainer {
     public static void main(String[] args) {
-        //加载配置文件
+        //加载配置文件（创建容器）
         //1.加载类路径下的配置文件
         ApplicationContext context = new ClassPathXmlApplicationContext("applicationContext.xml");
         //2.加载文件系统下的配置文件
@@ -2407,7 +2407,7 @@ public class AppForContainer {
         BookDao bookDao = (BookDao) context.getBean("bookDao");
         //2.使用Bean名称获取并指定类型
         //BookDao bookDao = context.getBean("bookDao", BookDao.class);
-        //3.使用Bean类型获取
+        //3.使用Bean类型获取（需保证容器中对应类型的Bean是唯一的）
         //BookDao bookDao = context.getBean(BookDao.class);
 
         bookDao.save();
@@ -2415,4 +2415,132 @@ public class AppForContainer {
 }
 ```
 
-https://www.bilibili.com/video/BV1Fi4y1S7ix/?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=19
+
+
+#### 容器类层次结构
+
+关于`ApplicationContext`类的结构分析：通过IDEA的**Hierarchy**功能可以看到`ApplicationContext`类的结构层次如下
+
+![ApplicationContext类的层次结构](./images/ApplicationContext类的层次结构.png)
+
+其中：
+
+- `BeanFactory`是最顶层的接口
+- `ApplicationContext`是常用的接口
+- `ConfigurableApplicationContext`提供了关闭容器功能`close()`方法
+- `ClassPathXmlApplicationContext`是常用实现类
+
+
+
+#### BeanFactory
+
+`BeanFactory`是Spring最早期的容器初始化方案，它与`ApplicationContext`的区别见如下代码：
+
+```java
+package com.stone;
+
+import com.stone.dao.BookDao;
+import org.springframework.beans.factory.BeanFactory;
+import org.springframework.beans.factory.xml.XmlBeanFactory;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
+
+public class AppForBeanFactory {
+    public static void main(String[] args) {
+        Resource resource = new ClassPathResource("applicationContext.xml");
+        BeanFactory bf = new XmlBeanFactory(resource);
+        BookDao bookDao = bf.getBean(BookDao.class);
+        bookDao.save();
+    }
+}
+```
+
+<span style="color:red;">BeanFactory与ApplicationContext的区别在于：两者加载Bean的时机不同。</span>
+
+我们在`BookDao`中设置构造函数，并查看`ApplicationContext`和`BeanFactory`调用它的时机：
+
+```java
+package com.stone.dao.impl;
+
+import com.stone.dao.BookDao;
+
+public class BookDaoImpl implements BookDao {
+
+    public BookDaoImpl() {
+        System.out.println("constructor");
+    }
+
+    @Override
+    public void save() {
+        System.out.println("book dao save ...");
+    }
+}
+```
+
+main方法
+
+```java
+package com.stone;
+
+import com.stone.dao.BookDao;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+import org.springframework.context.support.FileSystemXmlApplicationContext;
+
+public class AppForContainer {
+    public static void main(String[] args) {
+        ApplicationContext context = new ClassPathXmlApplicationContext("applicationContext.xml");
+    }
+}
+```
+
+运行结果如下：
+
+![ApplicationContext加载Bean的时机](./images/ApplicationContext加载Bean的时机.png)
+
+
+
+main方法
+
+```java
+package com.stone;
+
+import com.stone.dao.BookDao;
+import org.springframework.beans.factory.BeanFactory;
+import org.springframework.beans.factory.xml.XmlBeanFactory;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
+
+public class AppForBeanFactory {
+    public static void main(String[] args) {
+        Resource resource = new ClassPathResource("applicationContext.xml");
+        BeanFactory bf = new XmlBeanFactory(resource);
+    }
+}
+```
+
+运行结果如下：
+
+![BeanFactory加载Bean的时机](./images/BeanFactory加载Bean的时机.png)
+
+<span style="color:red;">由此可见 BeanFactory 是延迟加载Bean，即Bean只有在被获取使用的时候才会被初始化；而 ApplicationContext 是立即加载Bean，即在启动容器的时候Bean就已经被初始化好了。</span>
+
+
+
+通过在配置文件中设置`lazy-init`，也可以让`ApplicationContext`实现延迟加载Bean：
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <bean id="bookDao" class="com.stone.dao.impl.BookDaoImpl" lazy-init="true"/>
+</beans>
+```
+
+
+
+### 核心容器总结
+
+https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=20

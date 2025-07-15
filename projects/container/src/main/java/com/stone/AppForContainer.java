@@ -21,7 +21,7 @@ public class AppForContainer {
         BookDao bookDao = (BookDao) context.getBean("bookDao");
         //2.使用Bean名称获取并指定类型
         //BookDao bookDao = context.getBean("bookDao", BookDao.class);
-        //3.使用Bean类型获取
+        //3.使用Bean类型获取（需保证容器中对应类型的Bean是唯一的）
         //BookDao bookDao = context.getBean(BookDao.class);
 
         bookDao.save();
