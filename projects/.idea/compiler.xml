@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <annotationProcessing>
+      <profile name="Maven default annotation processors profile" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <module name="container" />
+        <module name="di_set" />
+        <module name="bean_lifecycle" />
+        <module name="annotation_bean_manager" />
+        <module name="base_config" />
+        <module name="bean_instance" />
+        <module name="datasource_manage" />
+        <module name="di_collection" />
+        <module name="annotation_bean" />
+        <module name="ioc_demo" />
+        <module name="di_autoware" />
+        <module name="di_constructor" />
+      </profile>
+    </annotationProcessing>
+  </component>
+</project>

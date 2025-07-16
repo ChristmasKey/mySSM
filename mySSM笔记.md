@@ -2543,4 +2543,458 @@ public class AppForBeanFactory {
 
 ### 核心容器总结
 
-https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=20
+#### 容器相关
+
+> BeanFactory是IoC容器的顶层接口，初始化BeanFactory对象时，加载的Bean是延时加载
+>
+> ApplicationContext接口是Spring容器的核心接口，初始化时Bean立即加载
+>
+> ApplicationContext接口提供基础的Bean操作相关方法，通过其他接口扩展其功能
+>
+> ApplicationContext接口常用初始化类
+>
+> - ClassPathXmlApplicationContext
+> - FileSystemXmlApplicationContext
+
+
+
+#### Bean相关
+
+![bean标签的属性](./images/bean标签的属性.png)
+
+
+
+#### 依赖注入相关
+
+![依赖注入相关标签](./images/依赖注入相关标签.png)
+
+
+
+### 注解开发
+
+<span style="color:red;">在Spring中，使用注解可以简化配置，加快开发速度。</span>
+
+从Spring2.0开始逐步提供了各种各样的注解，到Spring2.5注解已经基本完善。到了Spring3.0推出了纯注解开发。
+
+#### 注解开发定义Bean
+
+创建一个新的项目工程`annotation_bean`
+
+![注解开发-创建项目工程](./images/注解开发-创建项目工程.png)
+
+项目代码基本内容如下：
+
+`BookDao`
+
+```java
+package com.stone.dao;
+
+public interface BookDao {
+    void save();
+}
+```
+
+`BookDaoImpl`
+
+```java
+package com.stone.dao.impl;
+
+import com.stone.dao.BookDao;
+
+public class BookDaoImpl implements BookDao {
+    public void save() {
+        System.out.println("book dao save...");
+    }
+}
+```
+
+`BookService`
+
+```java
+package com.stone.service;
+
+public interface BookService {
+    void save();
+}
+```
+
+`BookServiceImpl`
+
+```java
+package com.stone.service.impl;
+
+import com.stone.dao.BookDao;
+import com.stone.service.BookService;
+
+public class BookServiceImpl implements BookService {
+    private BookDao bookDao;
+
+    public void setBookDao(BookDao bookDao) {
+        this.bookDao = bookDao;
+    }
+
+    public void save() {
+        System.out.println("book service save...");
+        bookDao.save();
+    }
+}
+```
+
+`applicationContext.xml`
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <bean id="bookDao" class="com.stone.dao.impl.BookDaoImpl"/>
+
+</beans>
+```
+
+main方法
+
+```java
+package com.stone;
+
+import com.stone.dao.BookDao;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+
+public class App {
+    public static void main(String[] args) {
+        ApplicationContext context = new ClassPathXmlApplicationContext("applicationContext.xml");
+        BookDao bookDao = context.getBean("bookDao", BookDao.class);
+        bookDao.save();
+    }
+}
+```
+
+
+
+首先将配置文件中的Bean配置改造成注解的形式：<span style="color:red;">在类上添加相应的注解，并在配置文件中配置注解扫描区</span>
+
+`BookDaoImpl`
+
+```java
+package com.stone.dao.impl;
+
+import com.stone.dao.BookDao;
+import org.springframework.stereotype.Component;
+
+@Component("bookDao")
+public class BookDaoImpl implements BookDao {
+    public void save() {
+        System.out.println("book dao save...");
+    }
+}
+```
+
+`applicationContext.xml`
+
+```java
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/context
+        http://www.springframework.org/schema/context/spring-context.xsd">
+
+    <!--<bean id="bookDao" class="com.stone.dao.impl.BookDaoImpl"/>-->
+
+    <!--扫描指定包及其子包中的类，将类中添加了注解的类作为bean对象进行管理-->
+    <context:component-scan base-package="com.stone"/>
+</beans>
+```
+
+接着如法炮制，将`BookService`也利用注解注册成Bean：
+
+`BookServiceImpl`
+
+```java
+package com.stone.service.impl;
+
+import com.stone.dao.BookDao;
+import com.stone.service.BookService;
+import org.springframework.stereotype.Component;
+
+@Component // 这里没有指定Bean的名称
+public class BookServiceImpl implements BookService {
+    private BookDao bookDao;
+
+    public void setBookDao(BookDao bookDao) {
+        this.bookDao = bookDao;
+    }
+
+    public void save() {
+        System.out.println("book service save...");
+        bookDao.save();
+    }
+}
+```
+
+main方法
+
+```java
+package com.stone;
+
+import com.stone.dao.BookDao;
+import com.stone.service.BookService;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+
+public class App {
+    public static void main(String[] args) {
+        ApplicationContext context = new ClassPathXmlApplicationContext("applicationContext.xml");
+        BookDao bookDao = context.getBean("bookDao", BookDao.class);
+        bookDao.save();
+
+        // 由于没有在注解中设置Bean的名称，所以这里应该通过类型类获取Bean
+        BookService bookService = context.getBean(BookService.class);
+        System.out.println(bookService);
+    }
+}
+```
+
+最终运行结果如下：
+
+![注解注册Bean运行结果](./images/注解注册Bean运行结果.png)
+
+
+
+##### 衍生注解
+
+Spring提供了@Component注解的三个衍生注解：
+
+- @Controller：用于表现层Bean定义
+- @Service：用于业务层Bean定义
+- @Repository：用于数据层Bean定义
+
+```java
+@Repository("bookDao")
+public class BookDaoImpl implements BookDao {}
+
+@Service
+public class BookServiceImpl implements BookService {}
+```
+
+
+
+
+
+#### Spring纯注解开发
+
+Spring3.0升级了纯注解开发模式，使用Java类替代配置文件，开启了Spring快速开发赛道。
+
+<span style="color:red;">通过以下配置类即可实现之前的配置文件效果</span>
+
+```java
+package com.stone.config;
+
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration // 声明这是一个Spring配置类
+@ComponentScan(basePackages = {"com.stone"}) // 配置注解扫描包
+public class SpringConfig {
+}
+```
+
+同时修改main方法
+
+```java
+package com.stone;
+
+import com.stone.config.SpringConfig;
+import com.stone.dao.BookDao;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+
+public class AppForAnnotation {
+    public static void main(String[] args) {
+        ApplicationContext context = new AnnotationConfigApplicationContext(SpringConfig.class);
+        BookDao bookDao = context.getBean("bookDao", BookDao.class);
+        bookDao.save();
+    }
+}
+```
+
+最终运行结果如下：
+
+![基于配置类的纯注解开发运行结果](./images/基于配置类的纯注解开发运行结果.png)
+
+
+
+#### Bean的管理
+
+创建一个新的项目工程`annotation_bean_manager`
+
+![annotation_bean_manager](./images/annotation_bean_manager.png)
+
+项目代码基本内容如下：
+
+`BookDao`
+
+```java
+package com.stone.dao;
+
+public interface BookDao {
+    void save();
+}
+```
+
+`BookDaoImpl`
+
+```java
+package com.stone.dao.impl;
+
+import com.stone.dao.BookDao;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public class BookDaoImpl implements BookDao {
+    public void save() {
+        System.out.println("book dao save...");
+    }
+}
+```
+
+`SpringConfig`
+
+```java
+package com.stone.config;
+
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+@ComponentScan(basePackages = {"com.stone"})
+public class SpringConfig {
+}
+```
+
+main方法
+
+```java
+package com.stone;
+
+import com.stone.config.SpringConfig;
+import com.stone.dao.BookDao;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+
+public class App {
+    public static void main(String[] args) {
+        ApplicationContext context = new AnnotationConfigApplicationContext(SpringConfig.class);
+        BookDao bookDao1 = context.getBean(BookDao.class);
+        BookDao bookDao2 = context.getBean(BookDao.class);
+        System.out.println(bookDao1);
+        System.out.println(bookDao2);
+    }
+}
+```
+
+
+
+**Bean作用范围**
+
+运行程序可知容器中的Bean是**单例**的：
+
+![annotation_bean_manager运行结果](./images/annotation_bean_manager运行结果.png)
+
+<span style="color:red;">通过在BookDaoImpl类中添加@Scope注解来控制容器中的Bean是否为单例模式</span>
+
+```java
+package com.stone.dao.impl;
+
+import com.stone.dao.BookDao;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Repository;
+
+@Repository
+@Scope("prototype")
+public class BookDaoImpl implements BookDao {
+    public void save() {
+        System.out.println("book dao save...");
+    }
+}
+```
+
+最终运行结果如下：
+
+![非单例模式Bean的运行结果](./images/非单例模式Bean的运行结果.png)
+
+
+
+**Bean生命周期**
+
+<span style="color:red;">通过在自定义方法上添加@PostConstructor注解和@PreDestroy注解来控制Bean的生命周期</span>
+
+```java
+package com.stone.dao.impl;
+
+import com.stone.dao.BookDao;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Repository;
+
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+
+@Repository
+// @Scope("prototype")
+public class BookDaoImpl implements BookDao {
+    public void save() {
+        System.out.println("book dao save...");
+    }
+
+    @PostConstruct
+    public void customInit() {
+        System.out.println("book dao init...");
+    }
+
+    @PreDestroy
+    public void customDestroy() {
+        System.out.println("book dao destroy...");
+    }
+}
+```
+
+同时修改main方法，调用容器的关闭钩子方法
+
+```java
+package com.stone;
+
+import com.stone.config.SpringConfig;
+import com.stone.dao.BookDao;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+
+public class App {
+    public static void main(String[] args) {
+        // ApplicationContext context = new AnnotationConfigApplicationContext(SpringConfig.class);
+        AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(SpringConfig.class);
+
+        BookDao bookDao1 = context.getBean(BookDao.class);
+        BookDao bookDao2 = context.getBean(BookDao.class);
+        System.out.println(bookDao1);
+        System.out.println(bookDao2);
+
+        context.close();
+    }
+}
+```
+
+最终运行结果如下：
+
+![通过注解控制Bean的生命周期](./images/通过注解控制Bean的生命周期.png)
+
+
+
+#### 依赖注入
+
+自动装配
+
+https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=24
