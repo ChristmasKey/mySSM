@@ -7,16 +7,17 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="container" />
-        <module name="di_set" />
-        <module name="bean_lifecycle" />
         <module name="annotation_bean_manager" />
-        <module name="base_config" />
-        <module name="bean_instance" />
         <module name="datasource_manage" />
         <module name="di_collection" />
         <module name="annotation_bean" />
         <module name="ioc_demo" />
         <module name="di_autoware" />
+        <module name="annotation_di" />
+        <module name="di_set" />
+        <module name="bean_lifecycle" />
+        <module name="base_config" />
+        <module name="bean_instance" />
         <module name="di_constructor" />
       </profile>
     </annotationProcessing>

@@ -2834,7 +2834,7 @@ public class AppForAnnotation {
 
 ![annotation_bean_manager](./images/annotation_bean_manager.png)
 
-项目代码基本内容如下：
+项目代码基本内容如下：（<span style="color:red;">本项目不再创建xml配置文件</span>）
 
 `BookDao`
 
@@ -2995,6 +2995,301 @@ public class App {
 
 #### 依赖注入
 
-自动装配
+**自动装配**
 
-https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=24
+创建一个新的项目工程`annotation_di`
+
+![annotatio_di](./images/annotatio_di.png)
+
+项目代码基本内容如下：（<span style="color:red;">本项目不再创建xml配置文件</span>）
+
+`SpringConfig`
+
+```java
+package com.stone.config;
+
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+@ComponentScan(basePackages = "com.stone")
+public class SpringConfig {
+}
+```
+
+`BookDao`
+
+```java
+package com.stone.dao;
+
+public interface BookDao {
+    void save();
+}
+```
+
+`BookDaoImpl`
+
+```java
+package com.stone.dao.impl;
+
+import com.stone.dao.BookDao;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public class BookDaoImpl implements BookDao {
+    public void save() {
+        System.out.println("book dao save...");
+    }
+}
+```
+
+`BookService`
+
+```java
+package com.stone.service;
+
+public interface BookService {
+    void save();
+}
+```
+
+`BookServiceImpl`
+
+```java
+package com.stone.service.impl;
+
+import com.stone.dao.BookDao;
+import com.stone.service.BookService;
+import org.springframework.stereotype.Service;
+
+@Service
+public class BookServiceImpl implements BookService {
+    private BookDao bookDao;
+
+    public void setBookDao(BookDao bookDao) {
+        this.bookDao = bookDao;
+    }
+
+    public void save() {
+        System.out.println("service save...");
+        bookDao.save();
+    }
+}
+```
+
+main方法
+
+```java
+package com.stone;
+
+import com.stone.config.SpringConfig;
+import com.stone.service.BookService;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+
+public class App {
+    public static void main(String[] args) {
+        ApplicationContext context = new AnnotationConfigApplicationContext(SpringConfig.class);
+        BookService bookService = context.getBean(BookService.class);
+        bookService.save();
+    }
+}
+```
+
+初次运行项目会得到如下结果：<span style="color:red;">这是因为没有了配置文件，就没有了两个Bean之间依赖关系的声明</span>
+
+![annotation_di运行结果1](./images/annotation_di运行结果1.png)
+
+
+
+##### 根据类型注入
+
+<b style="color:red;">要想解决这个问题，就需要用到@Autowired注解</b>
+
+```java
+package com.stone.service.impl;
+
+import com.stone.dao.BookDao;
+import com.stone.service.BookService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+@Service
+public class BookServiceImpl implements BookService {
+    @Autowired
+    private BookDao bookDao;
+
+    // 由于@Autowired注解是用反射机制中的暴力反射直接给属性赋值，所以不再需要setter方法
+    // public void setBookDao(BookDao bookDao) {
+    //     this.bookDao = bookDao;
+    // }
+
+    public void save() {
+        System.out.println("service save...");
+        bookDao.save();
+    }
+}
+```
+
+再次运行项目会得到如下结果：
+
+![annotation_di运行结果2](./images/annotation_di运行结果2.png)
+
+
+
+##### 根据名称注入
+
+<b style="color:red;">当BookDao接口存在多个实现类时，此时通过注解根据类型自动注入就会报错，因此要改为根据名称注入</b>
+
+![annotation_di运行结果3](./images/annotation_di运行结果3.png)
+
+`BookDaoImpl`
+
+```java
+package com.stone.dao.impl;
+
+import com.stone.dao.BookDao;
+import org.springframework.stereotype.Repository;
+
+@Repository("bookDao")
+public class BookDaoImpl implements BookDao {
+    public void save() {
+        System.out.println("book dao save...");
+    }
+}
+```
+
+`BookDaoImpl2`
+
+```java
+package com.stone.dao.impl;
+
+import com.stone.dao.BookDao;
+import org.springframework.stereotype.Repository;
+
+@Repository("bookDao2")
+public class BookDaoImpl2 implements BookDao {
+    public void save() {
+        System.out.println("book dao save...2");
+    }
+}
+```
+
+再次运行项目会得到如下结果：
+
+![annotation_di运行结果4](./images/annotation_di运行结果4.png)
+
+**拓展**：
+
+①：
+
+自动装配基于<span style="color:blue;">反射设计</span>创建对象，并暴力反射对应属性，为私有属性初始化数据，因此无需提供setter方法；
+
+自动装配建议使用<span style="color:blue;">无参构造方法</span>创建对象（默认），如果不提供对应构造方法，请提供唯一的构造方法；
+
+②：
+
+除了可以通过**更改属性名称**来切换注入的Bean类型之外，还可以通过**@Qualifier**注解来实现
+
+```java
+package com.stone.service.impl;
+
+import com.stone.dao.BookDao;
+import com.stone.service.BookService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Service;
+
+@Service
+public class BookServiceImpl implements BookService {
+    @Autowired
+    @Qualifier("bookDao2")
+    private BookDao bookDao;
+
+    // 由于@Autowired注解是用反射机制暴力反射直接给私有属性赋值，所以不再需要setter方法
+    // public void setBookDao(BookDao bookDao) {
+    //     this.bookDao = bookDao;
+    // }
+
+    public void save() {
+        System.out.println("service save...");
+        bookDao.save();
+    }
+}
+```
+
+
+
+##### 简单类型注入
+
+使用**@Value**注解可以实现简单类型的注入
+
+```java
+package com.stone.dao.impl;
+
+import com.stone.dao.BookDao;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Repository;
+
+@Repository("bookDao")
+public class BookDaoImpl implements BookDao {
+    @Value("SpringStone")
+    private String name;
+
+    public void save() {
+        System.out.println("book dao save..." + name);
+    }
+}
+```
+
+
+
+##### 加载properties文件
+
+在`resources`目录下新建jdbc.properties文件
+
+```properties
+name=SpringStone
+```
+
+在配置类中配置加载properties文件（<span style="color:red;">注意：路径仅支持单一文件配置，多文件请使用逗号隔开；不允许使用通配符*</span>）
+
+```java
+package com.stone.config;
+
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.PropertySource;
+
+@Configuration
+@ComponentScan(basePackages = "com.stone")
+@PropertySource({"classpath:jdbc.properties"}) // 加载项目路径下的properties文件
+public class SpringConfig {
+}
+```
+
+在类中使用占位符`${}`注入属性
+
+```java
+package com.stone.dao.impl;
+
+import com.stone.dao.BookDao;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Repository;
+
+@Repository("bookDao")
+public class BookDaoImpl implements BookDao {
+    @Value("${name}")
+    private String name;
+
+    public void save() {
+        System.out.println("book dao save..." + name);
+    }
+}
+```
+
+
+
+#### 第三方Bean管理
+
+https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=25
