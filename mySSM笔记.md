@@ -3292,4 +3292,163 @@ public class BookDaoImpl implements BookDao {
 
 #### 第三方Bean管理
 
-https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=25
+创建一个新的项目工程`annotation_third_bean_manager`
+
+![annotation_third_bean_manager](./images/annotation_third_bean_manager.png)
+
+项目代码基本内容如下：
+
+`SpringConfig`
+
+```java
+package com.stone.config;
+
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+public class SpringConfig {
+}
+```
+
+main方法
+
+```java
+package com.stone;
+
+import com.stone.config.SpringConfig;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+
+public class App {
+    public static void main(String[] args) {
+        AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(SpringConfig.class);
+    }
+}
+```
+
+
+
+##### 三方Bean管理
+
+<span style="color:red;">由于无法直接把Bean的管理注解写在第三方类中，所以我们需要在配置类中间接管理</span>
+
+首先导入三方依赖：
+
+```xml
+<!--Druid数据源-->
+<dependency>
+    <groupId>com.alibaba</groupId>
+    <artifactId>druid</artifactId>
+    <version>1.2.23</version>
+</dependency>
+```
+
+然后在配置类中编码：
+
+```java
+package com.stone.config;
+
+import com.alibaba.druid.pool.DruidDataSource;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+import javax.sql.DataSource;
+
+@Configuration
+public class SpringConfig {
+
+    // 1.定义一个方法获得要管理的对象
+    // 2.通过@Bean注解将方法的返回值注册成Bean对象
+    @Bean
+    public DataSource dataSource() {
+        DruidDataSource ds = new DruidDataSource();
+        ds.setDriverClassName("com.cj.mysql.jdbc.Driver");
+        ds.setUrl("jdbc:mysql:///test");
+        ds.setUsername("root");
+        ds.setPassword("1234");
+        return ds;
+    }
+}
+```
+
+最后在main方法中获取Bean：
+
+```java
+package com.stone.config;
+
+import com.alibaba.druid.pool.DruidDataSource;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+import javax.sql.DataSource;
+
+@Configuration
+public class SpringConfig {
+
+    // 1.定义一个方法获得要管理的对象
+    // 2.通过@Bean注解将方法的返回值注册成Bean对象
+    @Bean
+    public DataSource dataSource() {
+        DruidDataSource ds = new DruidDataSource();
+        ds.setDriverClassName("com.cj.mysql.jdbc.Driver");
+        ds.setUrl("jdbc:mysql:///test");
+        ds.setUsername("root");
+        ds.setPassword("1234");
+        return ds;
+    }
+}
+```
+
+最终运行结果如下：
+
+![annotation_third_bean_manager运行结果1](./images/annotation_third_bean_manager运行结果1.png)
+
+
+
+<span style="color:red;">如果所有的三方Bean都放在Spring的配置类中管理，就会让这个类变得臃肿，所以我们可以将这些部分抽离出来</span>
+
+首先抽离出`JdbcConfig`
+
+```java
+package com.stone.config;
+
+import com.alibaba.druid.pool.DruidDataSource;
+import org.springframework.context.annotation.Bean;
+
+import javax.sql.DataSource;
+
+public class JdbcConfig {
+
+    // 1.定义一个方法获得要管理的对象
+    // 2.通过@Bean注解将方法的返回值注册成Bean对象
+    @Bean
+    public DataSource dataSource() {
+        DruidDataSource ds = new DruidDataSource();
+        ds.setDriverClassName("com.cj.mysql.jdbc.Driver");
+        ds.setUrl("jdbc:mysql:///test");
+        ds.setUsername("root");
+        ds.setPassword("1234");
+        return ds;
+    }
+
+}
+```
+
+然后利用**@Import**注解在Spring配置类中导入`JdbcConfig`
+
+```java
+package com.stone.config;
+
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
+
+@Configuration
+@Import({JdbcConfig.class})
+public class SpringConfig {
+}
+```
+
+
+
+##### 三方依赖注入
+
+https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=26

@@ -9,6 +9,7 @@
         <module name="container" />
         <module name="annotation_bean_manager" />
         <module name="datasource_manage" />
+        <module name="annotation_third_bean_manager" />
         <module name="di_collection" />
         <module name="annotation_bean" />
         <module name="ioc_demo" />

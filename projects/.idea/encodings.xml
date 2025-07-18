@@ -7,5 +7,7 @@
     <file url="file://$PROJECT_DIR$/annotation_bean_manager/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/annotation_di/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/annotation_di/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/annotation_third_bean_manager/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/annotation_third_bean_manager/src/main/resources" charset="UTF-8" />
   </component>
 </project>
