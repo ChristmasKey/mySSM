@@ -3449,6 +3449,365 @@ public class SpringConfig {
 
 
 
-##### 三方依赖注入
+##### 注入属性值
 
-https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=26
+简单类型属性值注入：使用**@Value**注解
+
+```java
+package com.stone.config;
+
+import com.alibaba.druid.pool.DruidDataSource;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+
+import javax.sql.DataSource;
+
+public class JdbcConfig {
+
+    // 简单类型属性值注入
+    @Value("com.cj.mysql.jdbc.Driver")
+    private String driver;
+    @Value("jdbc:mysql:///test")
+    private String url;
+    @Value("root")
+    private String username;
+    @Value("1234")
+    private String password;
+
+    // 1.定义一个方法获得要管理的对象
+    // 2.通过@Bean注解将方法的返回值注册成Bean对象
+    @Bean
+    public DataSource dataSource() {
+        DruidDataSource ds = new DruidDataSource();
+        ds.setDriverClassName(driver);
+        ds.setUrl(url);
+        ds.setUsername(username);
+        ds.setPassword(password);
+        return ds;
+    }
+
+}
+```
+
+
+
+引用类型属性值注入：使用**自动装配**搭配方法**形参**
+
+`BookDao`
+
+```java
+package com.stone.dao;
+
+public interface BookDao {
+    void save();
+}
+```
+
+`BookDaoImpl`
+
+```java
+package com.stone.dao.impl;
+
+import com.stone.dao.BookDao;
+import org.springframework.stereotype.Repository;
+
+@Repository("bookDao")
+public class BookDaoImpl implements BookDao {
+    public void save() {
+        System.out.println("book dao save...");
+    }
+}
+```
+
+`SpringConfig`
+
+```java
+package com.stone.config;
+
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
+
+@Configuration
+@Import({JdbcConfig.class})
+@ComponentScan(basePackages = {"com.stone"})
+public class SpringConfig {
+}
+```
+
+`JdbcConfig`
+
+```java
+package com.stone.config;
+
+import com.alibaba.druid.pool.DruidDataSource;
+import com.stone.dao.BookDao;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+
+import javax.sql.DataSource;
+
+public class JdbcConfig {
+
+    // 通过成员变量注入简单类型
+    @Value("com.cj.mysql.jdbc.Driver")
+    private String driver;
+    @Value("jdbc:mysql:///test")
+    private String url;
+    @Value("root")
+    private String username;
+    @Value("1234")
+    private String password;
+
+    // 1.定义一个方法获得要管理的对象
+    // 2.通过@Bean注解将方法的返回值注册成Bean对象
+    @Bean
+    public DataSource dataSource(BookDao bookDao) {
+        // 通过自动装配注入引用类型
+        System.out.println(bookDao);
+        DruidDataSource ds = new DruidDataSource();
+        ds.setDriverClassName(driver);
+        ds.setUrl(url);
+        ds.setUsername(username);
+        ds.setPassword(password);
+        return ds;
+    }
+
+}
+```
+
+最终运行结果如下：
+
+![annotation_third_bean_manager运行结果2](./images/annotation_third_bean_manager运行结果2.png)
+
+
+
+#### 总结
+
+xml配置对比注解配置
+
+![xml配置对比注解配置](./images/xml配置对比注解配置.png)
+
+
+
+
+
+
+
+## Spring整合MyBatis
+
+首先创建一个新的项目工程`spring_mybatis`
+
+![spring_mybatis](./images/spring_mybatis.png)
+
+项目代码基本内容如下：<span style="color:red;">是关于Mybatis独立开发的内容</span>
+
+`t_account.sql`
+
+```sql
+CREATE TABLE `t_account` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) DEFAULT NULL,
+  `money` int(255) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+insert into `t_account` (name, money) value ('Tom', 1000);
+insert into `t_account` (name, money) value ('Jerry', 500);
+```
+
+`pom.xml`
+
+```xml
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.stone</groupId>
+  <artifactId>spring_mybatis</artifactId>
+  <version>1.0-SNAPSHOT</version>
+
+  <name>spring_mybatis</name>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.mybatis</groupId>
+      <artifactId>mybatis</artifactId>
+      <version>3.5.7</version>
+    </dependency>
+    <dependency>
+      <groupId>mysql</groupId>
+      <artifactId>mysql-connector-java</artifactId>
+      <version>8.0.16</version>
+    </dependency>
+  </dependencies>
+</project>
+```
+
+`jdbc.properties`
+
+```properties
+jdbc.driver=com.mysql.cj.jdbc.Driver
+jdbc.url=jdbc:mysql:///spring_stone?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai
+jdbc.username=root
+jdbc.password=1234
+```
+
+`SqlMapConfig.xml`
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration
+        PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+    <properties resource="jdbc.properties"/>
+    <typeAliases>
+        <package name="com.stone.domain"/>
+    </typeAliases>
+    <!--配置环境-->
+    <environments default="mysql">
+        <environment id="mysql">
+            <!--事务管理器-->
+            <transactionManager type="JDBC"/>
+            <!--数据源-->
+            <dataSource type="POOLED">
+                <property name="driver" value="${jdbc.driver}"/>
+                <property name="url" value="${jdbc.url}"/>
+                <property name="username" value="${jdbc.username}"/>
+                <property name="password" value="${jdbc.password}"/>
+            </dataSource>
+        </environment>
+    </environments>
+    <!--映射文件-->
+    <mappers>
+        <package name="com.stone.dao"/>
+    </mappers>
+</configuration>
+```
+
+`Account`
+
+```java
+package com.stone.domain;
+
+public class Account {
+
+    private Integer id;
+    private String name;
+    private Double money;
+
+    public Integer getId() {
+        return id;
+    }
+    public void setId(Integer id) {
+        this.id = id;
+    }
+    public String getName() {
+        return name;
+    }
+    public void setName(String name) {
+        this.name = name;
+    }
+    public Double getMoney() {
+        return money;
+    }
+    public void setMoney(Double money) {
+        this.money = money;
+    }
+
+    @Override
+    public String toString() {
+        return "Account{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", money=" + money +
+                '}';
+    }
+}
+```
+
+`AccountDao`
+
+```java
+package com.stone.dao;
+
+import com.stone.domain.Account;
+import org.apache.ibatis.annotations.Delete;
+import org.apache.ibatis.annotations.Insert;
+import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
+
+import java.util.List;
+
+public interface AccountDao {
+
+    @Insert("insert into t_account(name,money) values(#{name},#{money})")
+    void save(Account account);
+
+    @Update("update t_account set name=#{name},money=#{money} where id=#{id}")
+    void update(Account account);
+
+    @Delete("delete from t_account where id=#{id}")
+    void delete(Integer id);
+
+    @Select("select * from t_account")
+    List<Account> findAll();
+
+    @Select("select * from t_account where id=#{id}")
+    Account findById(Integer id);
+}
+```
+
+main方法
+
+```java
+package com.stone;
+
+import com.stone.dao.AccountDao;
+import com.stone.domain.Account;
+import org.apache.ibatis.io.Resources;
+import org.apache.ibatis.session.SqlSession;
+import org.apache.ibatis.session.SqlSessionFactory;
+import org.apache.ibatis.session.SqlSessionFactoryBuilder;
+
+import java.io.IOException;
+import java.io.InputStream;
+
+public class App {
+    public static void main(String[] args) throws IOException {
+        // 1. 创建 SqlSessionFactoryBuilder 对象
+        SqlSessionFactoryBuilder builder = new SqlSessionFactoryBuilder();
+        // 2. 加载配置文件 SqlMapConfig.xml
+        InputStream inputStream = Resources.getResourceAsStream("SqlMapConfig.xml");
+        // 3. 创建 SqlSessionFactory 对象
+        SqlSessionFactory sqlSessionFactory = builder.build(inputStream);
+        // 4. 创建 SqlSession 对象
+        SqlSession sqlSession = sqlSessionFactory.openSession();
+        // 5. 执行操作
+        AccountDao accountDao = sqlSession.getMapper(AccountDao.class);
+        Account account = accountDao.findById(1);
+        System.out.println(account);
+        // 6. 释放资源
+        sqlSession.close();
+    }
+}
+```
+
+
+
+<b style="color:red;">从上面的代码分析应该将Mybatis的哪些对象交给Spring管理成Bean</b>
+
+![Mybatis代码分析](./images/Mybatis代码分析.png)
+
+由上图可知，初始化并加载了`SqlMapConfig.xml`中配置信息的`SqlSessionFactory`对象是**核心对象**，应该交给Spring统一管理！
+
+而`SqlMapConfig.xml`中的配置信息分析如下：
+
+![SqlMapConfig配置分析](./images/SqlMapConfig配置分析.png)
+
+
+
+### 整合
+
+https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=29

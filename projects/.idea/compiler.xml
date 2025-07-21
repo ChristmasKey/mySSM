@@ -19,6 +19,7 @@
         <module name="bean_lifecycle" />
         <module name="base_config" />
         <module name="bean_instance" />
+        <module name="spring_mybatis" />
         <module name="di_constructor" />
       </profile>
     </annotationProcessing>
