@@ -3810,4 +3810,164 @@ public class App {
 
 ### 整合
 
+首先添加相关依赖
+
+```xml
+<!--spring-->
+<dependency>
+    <groupId>org.springframework</groupId>
+    <artifactId>spring-context</artifactId>
+    <version>5.3.27</version>
+</dependency>
+<!--druid连接池-->
+<dependency>
+    <groupId>com.alibaba</groupId>
+    <artifactId>druid</artifactId>
+    <version>1.2.23</version>
+</dependency>
+<!--spring-jdbc依赖-->
+<dependency>
+    <groupId>org.springframework</groupId>
+    <artifactId>spring-jdbc</artifactId>
+    <version>5.3.27</version>
+</dependency>
+<!--spring整合mybatis-->
+<dependency>
+    <groupId>org.mybatis</groupId>
+    <artifactId>mybatis-spring</artifactId>
+    <version>2.0.0</version>
+</dependency>
+```
+
+然后做好Spring注解开发的相关配置
+
+`SpringConfig`
+
+```java
+package com.stone.config;
+
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.PropertySource;
+
+@Configuration
+@ComponentScan(basePackages = {"com.stone"})
+@PropertySource({"classpath:jdbc.properties"})
+@Import(JdbcConfig.class)
+public class SpringConfig {
+}
+```
+
+`JdbcConfig`
+
+```java
+package com.stone.config;
+
+import com.alibaba.druid.pool.DruidDataSource;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+
+import javax.sql.DataSource;
+
+public class JdbcConfig {
+
+    @Value("${jdbc.driver}")
+    private String driver;
+    @Value("${jdbc.url}")
+    private String url;
+    @Value("${jdbc.username}")
+    private String username;
+    @Value("${jdbc.password}")
+    private String password;
+
+    @Bean
+    public DataSource dataSource() {
+        DruidDataSource ds = new DruidDataSource();
+        ds.setDriverClassName(driver);
+        ds.setUrl(url);
+        ds.setUsername(username);
+        ds.setPassword(password);
+        return ds;
+    }
+}
+```
+
+在`AccountDao`中添加注解
+
+```java
+@Repository
+public interface AccountDao {
+    ...
+}
+```
+
+`AccountService`
+
+```java
+package com.stone.service;
+
+import com.stone.domain.Account;
+
+import java.util.List;
+
+public interface AccountService {
+    void save();
+
+    void update(Account account);
+
+    void delete(Integer id);
+
+    Account findById(Integer id);
+
+    List<Account> findAll();
+}
+```
+
+`AccountServiceImpl`
+
+```java
+package com.stone.service.impl;
+
+import com.stone.dao.AccountDao;
+import com.stone.domain.Account;
+import com.stone.service.AccountService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+
+@Service
+public class AccountServiceImpl implements AccountService {
+
+    @Autowired
+    private AccountDao accountDao;
+
+    public List<Account> findAll() {
+        return accountDao.findAll();
+    }
+
+    public Account findById(Integer id) {
+        return accountDao.findById(id);
+    }
+
+    public void delete(Integer id) {
+        accountDao.delete(id);
+    }
+
+    public void update(Account account) {
+        accountDao.update(account);
+    }
+
+    public void save(Account account) {
+        accountDao.save(account);
+    }
+}
+```
+
+<span style="color:red;">接下来就要配置MyBatis的Bean管理，并抽离`MybatisConfig`类</span>
+
+```java
+```
+
 https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=29
