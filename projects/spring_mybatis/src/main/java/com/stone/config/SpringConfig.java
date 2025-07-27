@@ -8,6 +8,6 @@ import org.springframework.context.annotation.PropertySource;
 @Configuration
 @ComponentScan(basePackages = {"com.stone"})
 @PropertySource({"classpath:jdbc.properties"})
-@Import(JdbcConfig.class)
+@Import({JdbcConfig.class, MybatisConfig.class})
 public class SpringConfig {
 }

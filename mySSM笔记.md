@@ -3893,7 +3893,7 @@ public class JdbcConfig {
 }
 ```
 
-在`AccountDao`中添加注解
+在`AccountDao`中添加**@Repository**注解
 
 ```java
 @Repository
@@ -3965,9 +3965,172 @@ public class AccountServiceImpl implements AccountService {
 }
 ```
 
-<span style="color:red;">接下来就要配置MyBatis的Bean管理，并抽离`MybatisConfig`类</span>
+<span style="color:red;">接下来就要配置MyBatis的Bean管理，并抽离成`MybatisConfig`类</span>
 
 ```java
+package com.stone.config;
+
+import org.mybatis.spring.SqlSessionFactoryBean;
+import org.mybatis.spring.mapper.MapperScannerConfigurer;
+import org.springframework.context.annotation.Bean;
+
+import javax.sql.DataSource;
+
+public class MybatisConfig {
+
+    @Bean
+    public SqlSessionFactoryBean sqlSessionFactoryBean(DataSource dataSource) {
+        //spring整合mybatis依赖中提供了SqlSessionFactoryBean对象，可以让我们快速地创建SqlSessionFactory对象。
+        //通过查看SqlSessionFactoryBean的源码，发现该类实现了FactoryBean接口，且泛型为SqlSessionFactory。
+        SqlSessionFactoryBean ssfBean = new SqlSessionFactoryBean();
+        ssfBean.setTypeAliasesPackage("com.stone.domain");
+        ssfBean.setDataSource(dataSource);
+        return ssfBean;
+    }
+
+    @Bean
+    public MapperScannerConfigurer mapperScannerConfigurer() {
+        MapperScannerConfigurer msc = new MapperScannerConfigurer();
+        msc.setBasePackage("com.stone.dao");
+        return msc;
+    }
+}
 ```
 
-https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=29
+![MyBatis的xml配置文件和配置类的对应关系](./images/MyBatis的xml配置文件和配置类的对应关系.png)
+
+在`SpringConfig`中导入`MybatisConfig`
+
+```java
+package com.stone.config;
+
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.PropertySource;
+
+@Configuration
+@ComponentScan(basePackages = {"com.stone"})
+@PropertySource({"classpath:jdbc.properties"})
+@Import({JdbcConfig.class, MybatisConfig.class})
+public class SpringConfig {
+}
+```
+
+重新编写main方法
+
+```java
+package com.stone;
+
+import com.stone.config.SpringConfig;
+import com.stone.domain.Account;
+import com.stone.service.AccountService;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+
+public class App2 {
+    public static void main(String[] args) {
+        ApplicationContext context = new AnnotationConfigApplicationContext(SpringConfig.class);
+        AccountService accountService = context.getBean(AccountService.class);
+        Account account = accountService.findById(1);
+        System.out.println(account);
+    }
+}
+```
+
+最终运行结果如下：
+
+![spring_mybatis运行结果](./images/spring_mybatis运行结果.png)
+
+
+
+
+
+
+
+## Spring整合JUnit
+
+<span style="color:blue;">在之前的`spring_mybatis`项目工程中，继续整合JUnit</span>
+
+首先导入依赖
+
+```xml
+<!--junit-->
+<dependency>
+    <groupId>junit</groupId>
+    <artifactId>junit</artifactId>
+    <version>4.12</version>
+    <scope>test</scope>
+</dependency>
+<!--spring整合junit-->
+<dependency>
+    <groupId>org.springframework</groupId>
+    <artifactId>spring-test</artifactId>
+    <version>5.3.16</version>
+</dependency>
+```
+
+然后在`test`目录下创建测试类
+
+`AccountServiceTest`
+
+```java
+package com.stone.service;
+
+import com.stone.config.SpringConfig;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+
+@RunWith(SpringJUnit4ClassRunner.class) //设定类运行器，告诉junit使用spring的测试框架
+@ContextConfiguration(classes = SpringConfig.class) //加载spring配置文件
+public class AccountServiceTest {
+
+    @Autowired
+    private AccountService accountService;
+
+    @Test
+    public void testFindById() {
+        System.out.println(accountService.findById(2));
+    }
+
+    @Test
+    public void testFindAll() {
+        System.out.println(accountService.findAll());
+    }
+}
+```
+
+最终运行结果如下：
+
+![spring整合junit运行结果](./images/spring整合junit运行结果.png)
+
+
+
+
+
+
+
+## AOP
+
+### 核心概念
+
+AOP（Aspect Oriented Programming）面向切面编程，一种编程范式，知道开发者如何组织程序结构
+
+- OOP（Object Oriented Programming）面向对象编程
+
+<span style="color:red;">作用：在**不惊动原始设计的基础上**为其进行**功能增强**</span>
+
+实例代码：首先创建一个新的项目工程`aop_demo`
+
+
+
+项目代码基本内容如下：
+
+
+
+## End
+
+https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=31
