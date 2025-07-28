@@ -19,6 +19,8 @@
         <option value="$PROJECT_DIR$/annotation_di/pom.xml" />
         <option value="$PROJECT_DIR$/annotation_third_bean_manager/pom.xml" />
         <option value="$PROJECT_DIR$/spring_mybatis/pom.xml" />
+        <option value="$PROJECT_DIR$/aop_demo/pom.xml" />
+        <option value="$PROJECT_DIR$/aop_quickstart/pom.xml" />
       </list>
     </option>
   </component>

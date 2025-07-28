@@ -15,10 +15,12 @@
         <module name="ioc_demo" />
         <module name="di_autoware" />
         <module name="annotation_di" />
+        <module name="aop_demo" />
         <module name="di_set" />
         <module name="bean_lifecycle" />
         <module name="base_config" />
         <module name="bean_instance" />
+        <module name="aop_quickstart" />
         <module name="spring_mybatis" />
         <module name="di_constructor" />
       </profile>

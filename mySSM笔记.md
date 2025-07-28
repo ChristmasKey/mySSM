@@ -4115,22 +4115,363 @@ public class AccountServiceTest {
 
 ## AOP
 
-### 核心概念
+### 核心概念 TODO
 
 AOP（Aspect Oriented Programming）面向切面编程，一种编程范式，知道开发者如何组织程序结构
 
 - OOP（Object Oriented Programming）面向对象编程
 
-<span style="color:red;">作用：在**不惊动原始设计的基础上**为其进行**功能增强**</span>
+<span style="color:red;">作用：在**不改动原始设计的基础上**为其进行**功能增强**</span>
+
+<span style="color:red;">Spring理念：**无侵入式编程**</span>
 
 实例代码：首先创建一个新的项目工程`aop_demo`
 
-
+![aop_demo](./images/aop_demo.png)
 
 项目代码基本内容如下：
+
+`pom.xml`
+
+```xml
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.stone</groupId>
+  <artifactId>aop_demo</artifactId>
+  <version>1.0-SNAPSHOT</version>
+
+  <name>aop_demo</name>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-context</artifactId>
+      <version>5.3.27</version>
+    </dependency>
+  </dependencies>
+</project>
+```
+
+`SpringConfig`
+
+```java
+package com.stone.config;
+
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+@ComponentScan(basePackages = {"com.stone"})
+public class SpringConfig {
+}
+```
+
+`BookDao`
+
+```java
+package com.stone.dao;
+
+public interface BookDao {
+    void save();
+
+    void update();
+
+    void delete();
+
+    void select();
+}
+```
+
+`BookDaoImpl`
+
+```java
+package com.stone.dao.impl;
+
+import com.stone.dao.BookDao;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public class BookDaoImpl implements BookDao {
+
+    public void save() {
+        // 记录程序执行开始时间
+        Long startTime = System.currentTimeMillis();
+        // 业务执行
+        for (int i = 0; i < 10000; i++) {
+            System.out.println("book dao save...");
+        }
+        // 记录程序执行结束时间
+        Long endTime = System.currentTimeMillis();
+        // 计算程序执行时间
+        System.out.println("程序执行时间：" + (endTime - startTime) + "ms");
+    }
+
+    public void select() {
+        System.out.println("book dao select...");
+    }
+
+    public void delete() {
+        System.out.println("book dao delete...");
+    }
+
+    public void update() {
+        System.out.println("book dao update...");
+    }
+}
+```
+
+main方法
+
+```java
+package com.stone;
+
+import com.stone.config.SpringConfig;
+import com.stone.dao.BookDao;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+
+public class App {
+    public static void main(String[] args) {
+        ApplicationContext context = new AnnotationConfigApplicationContext(SpringConfig.class);
+        BookDao bookDao = context.getBean(BookDao.class);
+        bookDao.save();
+    }
+}
+```
+
+最终运行结果如下：
+
+
+
+可以看到，**AOP**让我们可以在不改动源代码的情况下，给其他方法也加上了“计算执行时间”的操作。
+
+从上面的代码，我们可以分析出**AOP的核心概念**：
+
+![AOP核心概念](./images/AOP核心概念.png)
+
+
+
+#### 总结
+
+<b style="color:red;">连接点（JoinPoint）：程序执行过程中的任意位置，粒度为执行方法、抛出异常、设置变量等</b>
+
+- 在SpringAOP中，理解为方法的执行
+
+<b style="color:red;">切入点（PointCut）：匹配连接点的式子</b>
+
+- 在SpringAOP中，一个切入点可以只描述一个具体方法，也可以匹配多个方法
+    - 一个具体方法：com.xxx.xxx包下的**BookDao**接口中定义的无形参、无返回值的**save**方法
+    - 匹配多个方法：所有的**save**方法；所有的get开头的方法；所有以Dao结尾的接口中定义的任意方法；所有只有一个形参的方法...
+
+<b style="color:red;">通知（Advice）：在切入点处执行的操作，也就是共性功能</b>
+
+- 在SpringAOP中，功能最终以方法的形式呈现
+
+<b style="color:red;">通知类：定义通知的类</b>
+
+<b style="color:red;">切面（Aspect）：描述通知与切入点的对应关系</b>
+
+
+
+### 入门案例
+
+需求：通过AOP实现在接口方法执行前输出当前系统时间
+
+<span style="color:blue;">思路分析</span>：使用**注解**开发
+
+1.导入依赖
+
+2.制作连接点方法：Dao接口与实现类
+
+3.制作共性功能：通知类与通知
+
+4.定义切入点
+
+5.绑定切入点与通知的关系（切面）
+
+
+
+<span style="color:blue;">具体实现</span>：
+
+创建一个新的项目工程`aop_quickstart`
+
+![aop_quickstart](./images/aop_quickstart.png)
+
+项目代码基本内容如下：
+
+`pom.xml`
+
+```xml
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.stone</groupId>
+  <artifactId>aop_quickstart</artifactId>
+  <version>1.0-SNAPSHOT</version>
+
+  <name>aop_quickstart</name>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-context</artifactId>
+      <version>5.3.27</version>
+    </dependency>
+  </dependencies>
+</project>
+```
+
+`SpringConfig`
+
+```java
+package com.stone.config;
+
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+@ComponentScan(basePackages = "com.stone")
+public class SpringConfig {
+}
+```
+
+`BookDao`
+
+```java
+package com.stone.dao;
+
+public interface BookDao {
+    void save();
+
+    void update();
+}
+```
+
+`BookDaoImpl`
+
+```java
+package com.stone.dao.impl;
+
+import com.stone.dao.BookDao;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public class BookDaoImpl implements BookDao {
+    public void update() {
+        System.out.println("book dao update...");
+    }
+
+    public void save() {
+        System.out.println(System.currentTimeMillis());
+        System.out.println("book dao save...");
+    }
+}
+```
+
+main方法
+
+```java
+package com.stone;
+
+import com.stone.config.SpringConfig;
+import com.stone.dao.BookDao;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+
+public class App {
+    public static void main(String[] args) {
+        ApplicationContext context = new AnnotationConfigApplicationContext(SpringConfig.class);
+        BookDao bookDao = context.getBean(BookDao.class);
+        bookDao.save();
+        bookDao.update();
+    }
+}
+```
+
+
+
+首先，需要导入AOP相关的依赖：<span style="color:red;">由于Spring中已经内置了AOP的核心依赖，所以我们只需要导入`aspectjweaver`依赖即可</span>
+
+![Spring内置aop依赖](./images/Spring内置aop依赖.png)
+
+```xml
+<!--切面编程相关依赖-->
+<dependency>
+    <groupId>org.aspectj</groupId>
+    <artifactId>aspectjweaver</artifactId>
+    <version>1.9.24</version>
+</dependency>
+```
+
+然后我们需要定义一个通知类`MyAdvice`
+
+```java
+package com.stone.aop;
+
+import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.annotation.Before;
+import org.aspectj.lang.annotation.Pointcut;
+import org.springframework.stereotype.Component;
+
+@Component // 将该类交给Spring作为Bean管理
+@Aspect // 声明该类是一个切面类
+public class MyAdvice {
+
+    // 定义通知（前置通知）
+    @Before("pointcut()") // 定义切面，绑定切入点和通知的关系
+    public void getSysTime() {
+        System.out.println("系统时间：" + System.currentTimeMillis());
+    }
+
+    // 定义切入点
+    @Pointcut("execution(void com.stone.dao.BookDao.update())")
+    private void pointcut() {}
+}
+```
+
+接着需要在`SpringConfig`中开启AOP注解支持
+
+```java
+package com.stone.config;
+
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.EnableAspectJAutoProxy;
+
+@Configuration
+@ComponentScan(basePackages = "com.stone")
+@EnableAspectJAutoProxy // 开启AOP注解支持
+public class SpringConfig {
+}
+```
+
+最终运行结果如下：
+
+![aop_quickstart运行结果](./images/aop_quickstart运行结果.png)
+
+
+
+### AOP工作流程
+
+1.Spring容器启动
+
+2.读取所有**切面**中配置的**切入点**
+
+3.初始化Bean，判断Bean对应的类中的方法是否匹配到任意**切入点**
+
+- 匹配失败，直接创建对象
+- 匹配成功，创建原始对象（<span style="color:red;">目标对象</span>）的<span style="color:red;">代理对象</span>
+
+4.获取Bean执行方法
+
+- 获取Bean，调用方法执行，完成操作
+- 获取Bean的代理对象，根据代理对象的运行模式运行原始方法与增强内容，完成操作
 
 
 
 ## End
 
-https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=31
+https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=33
