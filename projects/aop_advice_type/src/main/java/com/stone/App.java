@@ -9,9 +9,8 @@ public class App {
     public static void main(String[] args) {
         ApplicationContext context = new AnnotationConfigApplicationContext(SpringConfig.class);
         BookDao bookDao = context.getBean(BookDao.class);
-        // bookDao.save();
         // bookDao.update();
-        System.out.println(bookDao);
-        System.out.println(bookDao.getClass());
+        int select = bookDao.select();
+        System.out.println(select);
     }
 }

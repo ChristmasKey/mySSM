@@ -4115,7 +4115,7 @@ public class AccountServiceTest {
 
 ## AOP
 
-### 核心概念 TODO
+### 核心概念
 
 AOP（Aspect Oriented Programming）面向切面编程，一种编程范式，知道开发者如何组织程序结构
 
@@ -4472,6 +4472,534 @@ public class SpringConfig {
 
 
 
-## End
+通过在main方法中查看`BookDao`的**运行时类**来观察Bean被切入点匹配与否的区别
 
-https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=33
+```java
+package com.stone;
+
+import com.stone.config.SpringConfig;
+import com.stone.dao.BookDao;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+
+public class App {
+    public static void main(String[] args) {
+        ApplicationContext context = new AnnotationConfigApplicationContext(SpringConfig.class);
+        BookDao bookDao = context.getBean(BookDao.class);
+        // bookDao.save();
+        // bookDao.update();
+        System.out.println(bookDao);
+        System.out.println(bookDao.getClass());
+    }
+}
+```
+
+当Bean没有匹配到切入点时（此时我们将切入点注释掉）运行结果如下：
+
+![无切入点Bean](./images/无切入点Bean.png)
+
+当Bean匹配到切入点时，运行结果如下：
+
+![有切入点Bean](./images/有切入点Bean.png)
+
+
+
+#### 核心概念
+
+<span style="color:red;">目标对象（Target）</span>：原始功能去掉共性功能对应的类产生的对象，这种对象是无法直接完成最终工作的。
+
+<span style="color:red;">代理（Proxy）</span>：目标对象无法直接完成工作，需要对其进行功能回填，通过原始对象的代理对象实现。
+
+
+
+#### SpringAOP本质
+
+<b style="color:red;">SpringAOP的本质：代理模式</b>
+
+详情参考 `JDK的代理模式`
+
+
+
+### 切入点表达式
+
+**切入点**：要进行增强的方法；
+
+<b style="color:red;">切入点表达式</b>：要进行增强的方法的描述方式；
+
+对于任何一个接口或类中的方法，它的描述形式是多种多样的，只要最终能够准确表达即可。例如：
+
+![BookDao的Update方法描述](./images/BookDao的Update方法描述.png)
+
+
+
+<b style="color:red;">切入点表达式的标准格式如下：</b>
+
+> <span style="color:blue;">动作关键字 ( 访问修饰符 返回值 包名.接口/类名.方法名( 参数 ) 异常名 )</span>
+>
+> <span style="color:#5bae23;">例：execution ( public User com.stone.service.UserService.findById( int ) )</span>
+
+- 动作关键字：描述切入点的行为动作，例如`execution`表示执行到指定切入点
+- 访问修饰符：public, private等，可以省略
+- 返回值
+- 包名
+- 接口/类名
+- 方法名
+- 参数
+- 异常名：方法定义中抛出指定异常，可以省略
+
+
+
+我们还可以使用**通配符**来编写切入点表达式，进行快速批量描述
+
+- `*`：单个独立的任意符号，可以独立出现，也可以作为前后缀的匹配符出现
+
+```java
+//匹配com.stone包下的任意包中的UserService类或接口中所有find开头且只带有一个参数的方法
+execution ( public * com.stone.*.UserService.find*(*) )
+```
+
+- `..`：多个连续的任意符号，可以独立出现，常用于简化包名与参数的书写
+
+```java
+//匹配com包下的任意包中的UserService类或接口中所有名称为findById的方法，方法参数任意
+execution ( public User com..UserService.findById(..) )
+```
+
+- `+`：专用于匹配子类类型
+
+```java
+//匹配任意返回值类型，任意包下，名称含Service的类或接口中的任意方法，方法参数任意
+execution ( * *..*Service+.*(..) )
+```
+
+
+
+<b style="color:#ff9900;">表达式书写技巧</b>：
+
+![切入点表达式书写技巧](./images/切入点表达式书写技巧.png)
+
+
+
+### 通知类型
+
+<span style="color:#ef632b;">AOP通知描述了抽取的共性功能，根据共性功能抽取的位置不同，最终运行代码时要将其加入到合理的位置</span>
+
+AOP通知共分为5中类型：
+
+- 前置通知
+- 后置通知
+- <span style="color:red;">环绕通知</span>（重点）
+- 返回后通知（了解）
+- 抛出异常后通知（了解）
+
+
+
+创建一个新的项目工程`aop_advice_type`
+
+![aop_advice_type](./images/aop_advice_type.png)
+
+项目代码基本内容如下：
+
+`pom.xml`
+
+```xml
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.stone</groupId>
+  <artifactId>aop_advice_type</artifactId>
+  <version>1.0-SNAPSHOT</version>
+
+  <name>aop_advice_type</name>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-context</artifactId>
+      <version>5.3.27</version>
+    </dependency>
+    <!--切面编程相关依赖-->
+    <dependency>
+      <groupId>org.aspectj</groupId>
+      <artifactId>aspectjweaver</artifactId>
+      <version>1.9.24</version>
+    </dependency>
+  </dependencies>
+</project>
+```
+
+`SpringConfig`
+
+```java
+package com.stone.config;
+
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.EnableAspectJAutoProxy;
+
+@Configuration
+@ComponentScan(basePackages = "com.stone")
+@EnableAspectJAutoProxy
+public class SpringConfig {
+}
+```
+
+`BookDao`
+
+```java
+package com.stone.dao;
+
+public interface BookDao {
+
+    void update();
+
+    int select();
+}
+```
+
+`BookDaoImpl`
+
+```java
+package com.stone.dao.impl;
+
+import com.stone.dao.BookDao;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public class BookDaoImpl implements BookDao {
+    public int select() {
+        System.out.println("book dao select...");
+        return 100;
+    }
+
+    public void update() {
+        System.out.println("book dao update...");
+    }
+}
+```
+
+`MyAdvice`
+
+```java
+package com.stone.advice;
+
+import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.annotation.Before;
+import org.aspectj.lang.annotation.Pointcut;
+import org.springframework.stereotype.Component;
+
+@Component
+@Aspect
+public class MyAdvice {
+
+    @Before("pt()")
+    public void before() {
+        System.out.println("前置通知");
+    }
+
+    public void after() {
+        System.out.println("后置通知");
+    }
+
+    public void afterReturning() {
+        System.out.println("返回通知");
+    }
+
+    public void afterThrowing() {
+        System.out.println("异常通知");
+    }
+
+    public void around() {
+        System.out.println("环绕通知");
+    }
+
+    @Pointcut("execution(void com.stone.dao.BookDao.update())")
+    public void pt() {}
+}
+```
+
+main方法
+
+```java
+package com.stone;
+
+import com.stone.config.SpringConfig;
+import com.stone.dao.BookDao;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+
+public class App {
+    public static void main(String[] args) {
+        ApplicationContext context = new AnnotationConfigApplicationContext(SpringConfig.class);
+        BookDao bookDao = context.getBean(BookDao.class);
+        bookDao.update();
+        // int select = bookDao.select();
+        // System.out.println(select);
+    }
+}
+```
+
+
+
+现在，我们尝试一下其他几个通知类型，分别在对应的**通知**方法上使用注解定义**切面**，并查看运行结果
+
+#### <span style="color:#f9c116;">后置通知</span>
+
+```java
+package com.stone.advice;
+
+import org.aspectj.lang.annotation.After;
+import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.annotation.Before;
+import org.aspectj.lang.annotation.Pointcut;
+import org.springframework.stereotype.Component;
+
+@Component
+@Aspect
+public class MyAdvice {
+
+    @Before("pt()")
+    public void before() {
+        System.out.println("前置通知");
+    }
+
+    @After("pt()")
+    public void after() {
+        System.out.println("后置通知");
+    }
+
+    ...
+
+    @Pointcut("execution(void com.stone.dao.BookDao.update())")
+    public void pt() {}
+}
+```
+
+![前后置通知运行结果](./images/前后置通知运行结果.png)
+
+
+
+#### <span style="color:red;">环绕通知</span>
+
+```java
+package com.stone.advice;
+
+import org.aspectj.lang.ProceedingJoinPoint;
+import org.aspectj.lang.annotation.*;
+import org.springframework.stereotype.Component;
+
+@Component
+@Aspect
+public class MyAdvice {
+
+    ...
+
+    @Around("pt()")
+    public void around(ProceedingJoinPoint pjp) throws Throwable {
+        System.out.println("环绕通知1");
+        // 表示对原始操作的调用
+        pjp.proceed();
+        System.out.println("环绕通知2");
+    }
+
+    @Pointcut("execution(void com.stone.dao.BookDao.update())")
+    public void pt() {}
+}
+```
+
+![环绕通知运行结果1](./images/环绕通知运行结果1.png)
+
+如果环绕通知的切入点是有返回值的，应该如何处理呢？我们尝试给**select**方法加上环绕通知：
+
+```java
+package com.stone.advice;
+
+import org.aspectj.lang.ProceedingJoinPoint;
+import org.aspectj.lang.annotation.*;
+import org.springframework.stereotype.Component;
+
+@Component
+@Aspect
+public class MyAdvice {
+
+    ...
+
+    // 环绕通知的标准写法应该如下
+    @Around("pt()")
+    public Object around(ProceedingJoinPoint pjp) throws Throwable {
+        System.out.println("环绕通知1");
+        // 表示对原始操作的调用
+        Object res = pjp.proceed();
+        System.out.println("环绕通知2");
+
+        System.out.println("查看void方法的返回值 " + res);
+
+        return res;
+    }
+
+    @Pointcut("execution(void com.stone.dao.BookDao.update())")
+    public void pt() {}
+
+    @Around("selectPt()")
+    public Object selectAround(ProceedingJoinPoint pjp) throws Throwable {
+        System.out.println("环绕通知1");
+        // 表示对原始操作的调用
+        Integer res = (Integer) pjp.proceed();
+        System.out.println("环绕通知2");
+        // 返回原始操作的结果（也可以对返回结果做一些操作）
+        return res + 200;
+    }
+
+    @Pointcut("execution(int com.stone.dao.BookDao.select())")
+    public void selectPt() {
+    }
+}
+```
+
+放开main方法中的注释后查看运行结果：
+
+![环绕通知运行结果2](./images/环绕通知运行结果2.png)
+
+<b style="color:red;">综上，环绕通知的写法是有Object返回值、有ProceedingJoinPoint参数的！！！</b>
+
+
+
+#### <span style="color:#f9c116;">返回后通知</span>
+
+```java
+package com.stone.advice;
+
+import org.aspectj.lang.ProceedingJoinPoint;
+import org.aspectj.lang.annotation.*;
+import org.springframework.stereotype.Component;
+
+@Component
+@Aspect
+public class MyAdvice {
+
+    ...
+
+    @AfterReturning("selectPt()")
+    public void afterReturning() {
+        System.out.println("返回通知");
+    }
+    
+    ...
+
+    @Around("selectPt()")
+    public Object selectAround(ProceedingJoinPoint pjp) throws Throwable {
+        System.out.println("环绕通知1");
+        // 表示对原始操作的调用
+        Integer res = (Integer) pjp.proceed();
+        System.out.println("环绕通知2");
+        // 返回原始操作的结果（也可以对返回结果做一些操作）
+        return res + 200;
+    }
+
+    @Pointcut("execution(int com.stone.dao.BookDao.select())")
+    public void selectPt() {
+    }
+}
+```
+
+这里我们在main方法中注释掉了**update**方法的调用：
+
+![返回后通知运行结果](./images/返回后通知运行结果.png)
+
+从上面的结果不难看出，返回后通知会在原始操作返回值后立即执行。<span style="color:red;">而且返回后通知和后置通知的效果那么像，那么它们的区别是什么呢？</span>
+
+让我们尝试在**select**方法中添加异常操作，看看两种通知的执行情况：
+
+```java
+public int select() {
+    System.out.println("book dao select...");
+    System.out.println(10 / 0);
+    return 100;
+}
+```
+
+修改后置通知的切入点
+
+```java
+package com.stone.advice;
+
+import org.aspectj.lang.ProceedingJoinPoint;
+import org.aspectj.lang.annotation.*;
+import org.springframework.stereotype.Component;
+
+@Component
+@Aspect
+public class MyAdvice {
+
+    ...
+
+    @After("selectPt()")
+    public void after() {
+        System.out.println("后置通知");
+    }
+
+    @AfterReturning("selectPt()")
+    public void afterReturning() {
+        System.out.println("返回通知");
+    }
+    
+    ...
+
+    @Pointcut("execution(int com.stone.dao.BookDao.select())")
+    public void selectPt() {
+    }
+}
+```
+
+![返回后通知与后置通知的区别](./images/返回后通知与后置通知的区别.png)
+
+<b style="color:blue;">返回后通知和后置通知的区别就在于：返回后通知只会在原始操作正常返回值后执行；而后置通知无论原始操作是抛出异常还是正常返回值都会执行。</b>
+
+
+
+#### <span style="color:#f9c116;">抛出异常后通知</span>
+
+```java
+package com.stone.advice;
+
+import org.aspectj.lang.ProceedingJoinPoint;
+import org.aspectj.lang.annotation.*;
+import org.springframework.stereotype.Component;
+
+@Component
+@Aspect
+public class MyAdvice {
+
+    ...
+
+    @AfterThrowing("selectPt()")
+    public void afterThrowing() {
+        System.out.println("异常通知");
+    }
+
+    ...
+
+    @Pointcut("execution(int com.stone.dao.BookDao.select())")
+    public void selectPt() {
+    }
+}
+```
+
+当**select**方法中有异常时：
+
+![抛出异常后通知运行结果1](./images/抛出异常后通知运行结果1.png)
+
+当**select**方法中无异常时：
+
+![抛出异常后通知运行结果2](./images/抛出异常后通知运行结果2.png)
+
+
+
+#### 注意事项
+
+![环绕通知注意事项](./images/环绕通知注意事项.png)
+
+
+
+https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=36
