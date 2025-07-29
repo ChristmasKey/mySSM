@@ -4150,6 +4150,12 @@ AOP（Aspect Oriented Programming）面向切面编程，一种编程范式，�
       <artifactId>spring-context</artifactId>
       <version>5.3.27</version>
     </dependency>
+    <!--切面编程相关依赖-->
+    <dependency>
+      <groupId>org.aspectj</groupId>
+      <artifactId>aspectjweaver</artifactId>
+      <version>1.9.24</version>
+    </dependency>
   </dependencies>
 </project>
 ```
@@ -4161,9 +4167,11 @@ package com.stone.config;
 
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.EnableAspectJAutoProxy;
 
 @Configuration
 @ComponentScan(basePackages = {"com.stone"})
+@EnableAspectJAutoProxy // 开启AOP注解支持
 public class SpringConfig {
 }
 ```
@@ -4222,6 +4230,48 @@ public class BookDaoImpl implements BookDao {
 }
 ```
 
+`MyAdvice`
+
+```java
+package com.stone.aop;
+
+import org.aspectj.lang.ProceedingJoinPoint;
+import org.aspectj.lang.annotation.Around;
+import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.annotation.Pointcut;
+import org.springframework.stereotype.Component;
+
+@Component // 将该类交给Spring作为Bean管理
+@Aspect // 声明该类是一个切面类
+public class MyAdvice {
+
+    // 定义通知
+    @Around("pt()") // 定义切面，绑定切入点和通知的关系
+    public Object calculateTime(ProceedingJoinPoint point) throws Throwable {
+        // 记录程序执行开始时间
+        Long startTime = System.currentTimeMillis();
+
+        // 业务执行
+        Object object = null;
+        for (int i = 0; i < 10000; i++) {
+            object = point.proceed();
+        }
+
+        // 记录程序执行结束时间
+        Long endTime = System.currentTimeMillis();
+        // 计算程序执行时间
+        System.out.println("程序执行时间：" + (endTime - startTime) + "ms");
+
+        return object;
+    }
+
+    // 定义切入点
+    @Pointcut("execution(void com..*Dao.*te())")
+    private void pt(){
+    }
+}
+```
+
 main方法
 
 ```java
@@ -4236,14 +4286,17 @@ public class App {
     public static void main(String[] args) {
         ApplicationContext context = new AnnotationConfigApplicationContext(SpringConfig.class);
         BookDao bookDao = context.getBean(BookDao.class);
-        bookDao.save();
+        //bookDao.save();
+        //bookDao.update();
+        //bookDao.delete();
+        bookDao.select();
     }
 }
 ```
 
 最终运行结果如下：
 
-
+![aop_demo运行结果](./images/aop_demo运行结果.png)
 
 可以看到，**AOP**让我们可以在不改动源代码的情况下，给其他方法也加上了“计算执行时间”的操作。
 
@@ -5002,4 +5055,20 @@ public class MyAdvice {
 
 
 
-https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=36
+### 案例：万次执行效率
+
+<span style="color:red;">测量业务层接口的万次执行效率</span>
+
+需求：任意业务层接口执行均可显示其执行效率（执行时长）
+
+分析：
+
+①业务功能：业务层接口执行前后分别记录一次系统时间，求差值得到执行效率。
+
+②通知类型选择前后均可增强的类型——<span style="color:red;">环绕通知</span>
+
+
+
+<span style="color:blue;">案例详见项目工程 `service_interface_run_speed`</span>
+
+https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.videopod.episodes&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=36
