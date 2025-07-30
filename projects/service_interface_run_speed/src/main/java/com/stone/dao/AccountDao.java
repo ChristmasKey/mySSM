@@ -10,7 +10,7 @@ import java.util.List;
 
 public interface AccountDao {
 
-    @Insert("insert into t_account(name,money) values(#{name},#{money})")
+    @Insert("insert into t_account(name, money) values(#{name}, #{money})")
     void save(Account account);
 
     @Update("update t_account set name=#{name},money=#{money} where id=#{id}")

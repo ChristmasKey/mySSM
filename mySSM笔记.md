@@ -3893,15 +3893,6 @@ public class JdbcConfig {
 }
 ```
 
-在`AccountDao`中添加**@Repository**注解
-
-```java
-@Repository
-public interface AccountDao {
-    ...
-}
-```
-
 `AccountService`
 
 ```java
@@ -3990,6 +3981,8 @@ public class MybatisConfig {
 
     @Bean
     public MapperScannerConfigurer mapperScannerConfigurer() {
+        //MapperScannerConfigurer是mybatis-spring提供的，用于扫描指定包下的Mapper接口，
+        //并自动创建MapperFactoryBean对象，将Mapper接口注入到Spring容器中。
         MapperScannerConfigurer msc = new MapperScannerConfigurer();
         msc.setBasePackage("com.stone.dao");
         return msc;
@@ -5071,4 +5064,31 @@ public class MyAdvice {
 
 <span style="color:blue;">案例详见项目工程 `service_interface_run_speed`</span>
 
-https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.videopod.episodes&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=36
+<span style="color:#43b244;">一个新的小知识点：</span>如何获取原始执行方法的类名称和方法名称
+
+```java
+@Around("servicePt()")
+public Object runSpeed(ProceedingJoinPoint point) throws Throwable {
+    Long startTime = System.currentTimeMillis();
+    Object result = null;
+
+    for (int i = 0; i < 10000; i++) {
+        result = point.proceed();
+    }
+
+    Long endTime = System.currentTimeMillis();
+    // 获取原始执行方法的类/接口名称
+    String className = point.getSignature().getDeclaringTypeName();
+    // 获取原始执行方法的名称
+    String methodName = point.getSignature().getName();
+    System.out.println(className + " " + methodName + "方法执行时间：" + (endTime - startTime) + "ms");
+
+    return result;
+}
+```
+
+
+
+### AOP通知获取数据
+
+https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=37

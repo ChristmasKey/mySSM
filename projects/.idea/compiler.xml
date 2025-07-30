@@ -16,6 +16,7 @@
         <module name="di_autoware" />
         <module name="annotation_di" />
         <module name="aop_demo" />
+        <module name="service_interface_run_speed" />
         <module name="di_set" />
         <module name="bean_lifecycle" />
         <module name="base_config" />

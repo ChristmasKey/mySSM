@@ -20,6 +20,8 @@ public class MybatisConfig {
 
     @Bean
     public MapperScannerConfigurer mapperScannerConfigurer() {
+        //MapperScannerConfigurer是mybatis-spring提供的，用于扫描指定包下的Mapper接口，
+        //并自动创建MapperFactoryBean对象，将Mapper接口注入到Spring容器中。
         MapperScannerConfigurer msc = new MapperScannerConfigurer();
         msc.setBasePackage("com.stone.dao");
         return msc;
