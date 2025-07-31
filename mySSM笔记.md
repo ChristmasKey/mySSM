@@ -5091,4 +5091,27 @@ public Object runSpeed(ProceedingJoinPoint point) throws Throwable {
 
 ### AOP通知获取数据
 
-https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=37
+获取切入点方法的参数
+
+- **JoinPoint**：适用于前置、后置、返回后、抛出异常后通知
+- **ProceedJoinPoint**：适用于环绕通知
+
+获取切入点方法的返回值，仅限以下两种通知
+
+- 返回后通知
+- 环绕通知
+
+获取切入点方法运行时异常信息，仅限以下两种通知
+
+- 抛出异常后通知
+- 环绕通知
+
+
+
+创建一个新的项目工程`aop_advice_data`
+
+![aop_advice_data](./images/aop_advice_data.png)
+
+项目代码基本内容如下：
+
+https://www.bilibili.com/video/BV1Fi4y1S7ix/?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=37
