@@ -5114,4 +5114,214 @@ public Object runSpeed(ProceedingJoinPoint point) throws Throwable {
 
 项目代码基本内容如下：
 
+`pom.xml`
+
+```xml
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.stone</groupId>
+  <artifactId>aop_advice_data</artifactId>
+  <version>1.0-SNAPSHOT</version>
+
+  <name>aop_advice_data</name>
+
+  <dependencies>
+    <!--spring相关依赖-->
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-context</artifactId>
+      <version>5.3.27</version>
+    </dependency>
+    <!--切面编程相关依赖-->
+    <dependency>
+      <groupId>org.aspectj</groupId>
+      <artifactId>aspectjweaver</artifactId>
+      <version>1.9.24</version>
+    </dependency>
+  </dependencies>
+</project>
+```
+
+`SpringConfig`
+
+```java
+package com.stone.config;
+
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+@ComponentScan(basePackages = {"com.stone"})
+@EnableAspectJAutoProxy
+public class SpringConfig {
+}
+```
+
+`BookDao`
+
+```java
+package com.stone.dao;
+
+public interface BookDao {
+
+    String findName(int id);
+}
+```
+
+`BookDaoImpl`
+
+```java
+package com.stone.dao.impl;
+
+import com.stone.dao.BookDao;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public class BookDaoImpl implements BookDao {
+    @Override
+    public String findName(int id) {
+        System.out.println("id: " + id);
+        return "SpringStone";
+    }
+}
+```
+
+main方法
+
+```java
+package com.stone;
+
+import com.stone.config.SpringConfig;
+import com.stone.dao.BookDao;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+
+public class App {
+    public static void main(String[] args) {
+        ApplicationContext context = new AnnotationConfigApplicationContext(SpringConfig.class);
+        BookDao bookDao = context.getBean(BookDao.class);
+        String name = bookDao.findName(100);
+        System.out.println(name);
+    }
+}
+```
+
+
+
+接下来，我们尝试用AOP通知来获取原始操作中的数据
+
+前置通知：获取原始操作的参数
+
+```java
+package com.stone.aop;
+
+import org.aspectj.lang.JoinPoint;
+import org.aspectj.lang.ProceedingJoinPoint;
+import org.aspectj.lang.annotation.*;
+import org.springframework.stereotype.Component;
+
+import java.util.Arrays;
+
+@Component
+@Aspect
+public class MyAdvice {
+
+    @Pointcut("execution(* com.stone.dao.BookDao.findName(..))")
+    private void pt() {}
+
+    @Before("pt()")
+    public void before(JoinPoint joinPoint) {
+        Object[] args = joinPoint.getArgs();
+        System.out.println("前置通知，参数列表：" + Arrays.toString(args));
+    }
+}
+```
+
+![aop_advice_data运行结果1](./images/aop_advice_data运行结果1.png)
+
+后置通知：获取原始操作的参数，同上
+
+```java
+package com.stone.aop;
+
+import org.aspectj.lang.JoinPoint;
+import org.aspectj.lang.ProceedingJoinPoint;
+import org.aspectj.lang.annotation.*;
+import org.springframework.stereotype.Component;
+
+import java.util.Arrays;
+
+@Component
+@Aspect
+public class MyAdvice {
+
+    @Pointcut("execution(* com.stone.dao.BookDao.findName(..))")
+    private void pt() {}
+
+    @Before("pt()")
+    public void before(JoinPoint joinPoint) {
+        Object[] args = joinPoint.getArgs();
+        System.out.println("前置通知，参数列表：" + Arrays.toString(args));
+    }
+
+    @After("pt()")
+    public void after(JoinPoint joinPoint) {
+        Object[] args = joinPoint.getArgs();
+        System.out.println("后置通知，参数列表：" + Arrays.toString(args));
+    }
+}
+```
+
+我们修改`BookDao`中方法的参数后再查看运行结果
+
+```java
+package com.stone.dao;
+
+public interface BookDao {
+
+    String findName(int id, String name);
+}
+```
+
+`BookDaoImpl`
+
+```java
+package com.stone.dao.impl;
+
+import com.stone.dao.BookDao;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public class BookDaoImpl implements BookDao {
+    @Override
+    public String findName(int id, String name) {
+        System.out.println("id: " + id);
+        return name;
+    }
+}
+
+```
+
+main方法
+
+```java
+package com.stone;
+
+import com.stone.config.SpringConfig;
+import com.stone.dao.BookDao;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+
+public class App {
+    public static void main(String[] args) {
+        ApplicationContext context = new AnnotationConfigApplicationContext(SpringConfig.class);
+        BookDao bookDao = context.getBean(BookDao.class);
+        String name = bookDao.findName(100, "SpringStone");
+        System.out.println(name);
+    }
+}
+```
+
 https://www.bilibili.com/video/BV1Fi4y1S7ix/?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=37
