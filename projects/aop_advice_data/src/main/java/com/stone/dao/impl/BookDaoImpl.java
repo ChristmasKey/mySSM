@@ -8,6 +8,7 @@ public class BookDaoImpl implements BookDao {
     @Override
     public String findName(int id, String name) {
         System.out.println("id: " + id);
+        System.out.println(1/0);
         return name;
     }
 }

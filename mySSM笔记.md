@@ -5208,11 +5208,13 @@ public class App {
 }
 ```
 
+接下来，我们尝试用AOP通知来获取原始操作中的数据。
 
 
-接下来，我们尝试用AOP通知来获取原始操作中的数据
 
-前置通知：获取原始操作的参数
+#### 获取参数
+
+**前置通知**：获取原始操作的参数
 
 ```java
 package com.stone.aop;
@@ -5241,7 +5243,9 @@ public class MyAdvice {
 
 ![aop_advice_data运行结果1](./images/aop_advice_data运行结果1.png)
 
-后置通知：获取原始操作的参数，同上
+
+
+**后置通知**：获取原始操作的参数，同上
 
 ```java
 package com.stone.aop;
@@ -5324,4 +5328,232 @@ public class App {
 }
 ```
 
-https://www.bilibili.com/video/BV1Fi4y1S7ix/?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=37
+![aop_advice_data运行结果2](./images/aop_advice_data运行结果2.png)
+
+
+
+**环绕通知**：获取原始操作的参数
+
+<span style="color:red;">注意：在环绕通知中，`ProceedingJoinPoint` 是 `JoinPoint`的子接口，所以它也可以调用**getArgs**方法。</span>
+
+```java
+package com.stone.aop;
+
+import org.aspectj.lang.JoinPoint;
+import org.aspectj.lang.ProceedingJoinPoint;
+import org.aspectj.lang.annotation.*;
+import org.springframework.stereotype.Component;
+
+import java.util.Arrays;
+
+@Component
+@Aspect
+public class MyAdvice {
+
+    @Pointcut("execution(* com.stone.dao.BookDao.findName(..))")
+    private void pt() {
+    }
+
+    @Around("pt()")
+    public Object around(ProceedingJoinPoint pjp) throws Throwable {
+        //ProceedingJoinPoint是JoinPoint的子接口
+        Object[] args = pjp.getArgs();
+        System.out.println("环绕通知，参数列表：" + Arrays.toString(args));
+        //Object res = pjp.proceed();
+        //我们可以对获取的参数进行校验和加工后，再传给原始操作去执行
+        args[0] = "666";
+        Object res = pjp.proceed(args);
+        System.out.println("环绕通知：方法执行后");
+        return res;
+    }
+}
+```
+
+![aop_advice_data运行结果3](./images/aop_advice_data运行结果3.png)
+
+
+
+**返回后通知和抛出异常后通知**：获取原始操作的参数
+
+```java
+package com.stone.aop;
+
+import org.aspectj.lang.JoinPoint;
+import org.aspectj.lang.ProceedingJoinPoint;
+import org.aspectj.lang.annotation.*;
+import org.springframework.stereotype.Component;
+
+import java.util.Arrays;
+
+@Component
+@Aspect
+public class MyAdvice {
+
+    @Pointcut("execution(* com.stone.dao.BookDao.findName(..))")
+    private void pt() {
+    }
+
+     @AfterReturning("pt()")
+    public void afterReturning(JoinPoint joinPoint) {
+        Object[] args = joinPoint.getArgs();
+        System.out.println("返回通知，参数列表：" + Arrays.toString(args));
+    }
+
+     @AfterThrowing("pt()")
+    public void afterThrowing(JoinPoint joinPoint) {
+        Object[] args = joinPoint.getArgs();
+        System.out.println("异常通知，参数列表：" + Arrays.toString(args));
+    }
+}
+```
+
+![aop_advice_data运行结果4](./images/aop_advice_data运行结果4.png)
+
+修改**findName**方法测试抛出异常后通知能否获取参数
+
+```java
+package com.stone.dao.impl;
+
+import com.stone.dao.BookDao;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public class BookDaoImpl implements BookDao {
+    @Override
+    public String findName(int id, String name) {
+        System.out.println("id: " + id);
+        System.out.println(1/0);
+        return name;
+    }
+}
+```
+
+![aop_advice_data运行结果5](./images/aop_advice_data运行结果5.png)
+
+
+
+#### 获取返回值
+
+**返回后通知**：获取原始操作的返回值
+
+```java
+package com.stone.aop;
+
+import org.aspectj.lang.JoinPoint;
+import org.aspectj.lang.ProceedingJoinPoint;
+import org.aspectj.lang.annotation.*;
+import org.springframework.stereotype.Component;
+
+import java.util.Arrays;
+
+@Component
+@Aspect
+public class MyAdvice {
+
+    @Pointcut("execution(* com.stone.dao.BookDao.findName(..))")
+    private void pt() {
+    }
+
+     @AfterReturning(value = "pt()", returning = "res") // 通过注解中的returning属性指明用来接收返回值的形参，属性值和形参名必须保持一致
+    public void afterReturning(JoinPoint joinPoint, Object res) { // 形参中的顺序要求：JoinPoint（如果有）必须在第一个，返回值在后
+        Object[] args = joinPoint.getArgs();
+        System.out.println("返回通知，参数列表：" + Arrays.toString(args));
+        System.out.println("返回通知，返回值：" + res);
+    }
+}
+```
+
+![aop_advice_data运行结果6](./images/aop_advice_data运行结果6.png)
+
+
+
+
+
+**环绕通知**：获取原始操作的返回值的方式在前面已经试过了，所以此处忽略。
+
+
+
+#### 获取异常
+
+**抛出异常后通知**：获取原始操作的运行时异常
+
+```java
+package com.stone.aop;
+
+import org.aspectj.lang.JoinPoint;
+import org.aspectj.lang.ProceedingJoinPoint;
+import org.aspectj.lang.annotation.*;
+import org.springframework.stereotype.Component;
+
+import java.util.Arrays;
+
+@Component
+@Aspect
+public class MyAdvice {
+
+    @Pointcut("execution(* com.stone.dao.BookDao.findName(..))")
+    private void pt() {
+    }
+
+    @AfterThrowing(value = "pt()", throwing = "e") // 通过注解中的throwing属性指明用来接收异常的形参，属性值和形参名必须保持一致
+    public void afterThrowing(JoinPoint joinPoint, Throwable e) { // 形参中的顺序要求：JoinPoint（如果有）必须在第一个，异常在后
+        Object[] args = joinPoint.getArgs();
+        System.out.println("异常通知，参数列表：" + Arrays.toString(args));
+        System.out.println("异常通知，异常信息：" + e.getMessage());
+    }
+}
+```
+
+同样修改**findName**方法测试运行结果
+
+![aop_advice_data运行结果7](./images/aop_advice_data运行结果7.png)
+
+
+
+**环绕通知**：获取原始操作的运行时异常，<span style="color:red;">使用try-catch语句</span>
+
+```java
+package com.stone.aop;
+
+import org.aspectj.lang.JoinPoint;
+import org.aspectj.lang.ProceedingJoinPoint;
+import org.aspectj.lang.annotation.*;
+import org.springframework.stereotype.Component;
+
+import java.util.Arrays;
+
+@Component
+@Aspect
+public class MyAdvice {
+
+    @Pointcut("execution(* com.stone.dao.BookDao.findName(..))")
+    private void pt() {
+    }
+
+    @Around("pt()")
+    public Object around(ProceedingJoinPoint pjp) {
+        //ProceedingJoinPoint是JoinPoint的子接口
+        Object[] args = pjp.getArgs();
+        System.out.println("环绕通知，参数列表：" + Arrays.toString(args));
+        //Object res = pjp.proceed();
+        //我们可以对获取的参数进行校验和加工后，再传给原始操作去执行
+        args[0] = 666;
+        Object res = null;
+        try {
+            res = pjp.proceed(args);
+        } catch (Throwable e) {
+            System.out.println("环绕通知：方法执行异常" + e.getMessage());
+        }
+        System.out.println("环绕通知：方法执行后");
+        return res;
+    }
+}
+```
+
+![aop_advice_data运行结果8](./images/aop_advice_data运行结果8.png)
+
+
+
+### 案例：网盘密码数据兼容处理
+
+https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=38
