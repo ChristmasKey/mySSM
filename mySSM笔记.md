@@ -5554,6 +5554,24 @@ public class MyAdvice {
 
 
 
-### 案例：网盘密码数据兼容处理
+### 案例：网盘密码数据处理
 
-https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=38
+需求：用户在输入网盘密码时尾部容易多输入空格。
+
+所以我们要在验证密码的业务方法执行之前对所有的输入参数进行格式处理——trim()。
+
+分析：使用处理后的参数调用原始方法——<span style="color:red;">环绕通知中存在对原始方法的调用</span>。
+
+
+
+<span style="color:blue;">案例详见项目工程`password_trim_handle`</span>
+
+
+
+
+
+
+
+## Spring事务
+
+https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=40
