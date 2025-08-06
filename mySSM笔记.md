@@ -5574,4 +5574,28 @@ public class MyAdvice {
 
 ## Spring事务
 
-https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=40
+Spring事务简介
+
+事务作用：在数据层保障一系列的数据库操作共同成功/失败；
+
+Spring事务作用：在数据层或<span style="color:red;">业务层</span>保障一系列的数据库操作共同成功/失败
+
+<span style="color:blue;">Spring中提供了一个接口`PlatformTransactionManager`</span>
+
+```java
+public interface PlatformTransactionManager {
+    void commit(TransactionStatus status) throws TransactionException;
+    void rollback(TransactionStatus status) throws TransactionException;
+}
+```
+
+<span style="color:blue;">并提供了一个最基本的事务管理器实现类`DatasourceTransactionManager`</span>
+
+```java
+public class DataSourceTransactionManager {
+    ...
+}
+```
+
+https://www.bilibili.com/video/BV1Fi4y1S7ix/?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=40
+
