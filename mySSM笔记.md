@@ -5597,5 +5597,22 @@ public class DataSourceTransactionManager {
 }
 ```
 
-https://www.bilibili.com/video/BV1Fi4y1S7ix/?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=40
+<span style="color:blue;">其内部使用的是JDBC的事务，所以只兼容JDBC。</span>
 
+
+
+**案例：银行转账业务**
+
+需求：实现任意两个银行账户间的转账操作，即A账户扣减金额，B账户增加金额。
+
+分析：
+
+①数据层提供基础操作：指定账户扣减/增加金额（outMoney / inMoney）
+
+②业务层提供转账操作（transfer）：调用扣减与增加金额的操作
+
+③提供两个账号和操作金额，执行转账操作
+
+④基于Spring整合MyBatis环境搭建项目
+
+https://www.bilibili.com/video/BV1Fi4y1S7ix/?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=40
