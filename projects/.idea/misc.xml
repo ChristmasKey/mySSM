@@ -25,6 +25,7 @@
         <option value="$PROJECT_DIR$/service_interface_run_speed/pom.xml" />
         <option value="$PROJECT_DIR$/aop_advice_data/pom.xml" />
         <option value="$PROJECT_DIR$/password_trim_handle/pom.xml" />
+        <option value="$PROJECT_DIR$/bank_account_transfer/pom.xml" />
       </list>
     </option>
   </component>

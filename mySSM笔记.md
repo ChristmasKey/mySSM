@@ -5615,4 +5615,259 @@ public class DataSourceTransactionManager {
 
 ④基于Spring整合MyBatis环境搭建项目
 
+
+
+首先创建一个新的项目工程`bank_account_transfer`
+
+![bank_account_transfer](./images/bank_account_transfer.png)
+
+然后搭建项目环境：数据库表原始数据如下
+
+![t_account表原始状态](./images/t_account表原始状态.png)
+
+`pom.xml`
+
+```xml
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.stone</groupId>
+  <artifactId>bank_account_transfer</artifactId>
+  <version>1.0-SNAPSHOT</version>
+
+  <name>bank_account_transfer</name>
+
+  <dependencies>
+    <!--Spring、MyBatis、MyBatis-Spring、Mysql-Connector、Spring-JDBC、Druid、JUnit、Spring-JUnit-->
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-context</artifactId>
+      <version>5.3.27</version>
+    </dependency>
+    <dependency>
+      <groupId>org.mybatis</groupId>
+      <artifactId>mybatis</artifactId>
+      <version>3.5.7</version>
+    </dependency>
+    <dependency>
+      <groupId>org.mybatis</groupId>
+      <artifactId>mybatis-spring</artifactId>
+      <version>2.0.0</version>
+    </dependency>
+    <dependency>
+      <groupId>mysql</groupId>
+      <artifactId>mysql-connector-java</artifactId>
+      <version>8.0.16</version>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-jdbc</artifactId>
+      <version>5.3.27</version>
+    </dependency>
+    <dependency>
+      <groupId>com.alibaba</groupId>
+      <artifactId>druid</artifactId>
+      <version>1.2.23</version>
+    </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.12</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-test</artifactId>
+      <version>5.3.16</version>
+    </dependency>
+  </dependencies>
+</project>
+```
+
+`SpringConfig`
+
+```java
+package com.stone.config;
+
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.PropertySource;
+
+@Configuration
+@ComponentScan(basePackages = "com.stone")
+@PropertySource({"classpath:jdbc.properties"})
+@Import({JdbcConfig.class, MybatisConfig.class})
+public class SpringConfig {
+}
+```
+
+`JdbcConfig`
+
+```java
+package com.stone.config;
+
+import com.alibaba.druid.pool.DruidDataSource;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+
+import javax.sql.DataSource;
+
+public class JdbcConfig {
+
+    @Value("${jdbc.driver}")
+    private String driver;
+    @Value("${jdbc.url}")
+    private String url;
+    @Value("${jdbc.username}")
+    private String username;
+    @Value("${jdbc.password}")
+    private String password;
+
+    @Bean
+    public DataSource dataSource() {
+        DruidDataSource ds = new DruidDataSource();
+        ds.setDriverClassName(driver);
+        ds.setUrl(url);
+        ds.setUsername(username);
+        ds.setPassword(password);
+        return ds;
+    }
+}
+```
+
+`MybatisConfig`
+
+```java
+package com.stone.config;
+
+import org.mybatis.spring.SqlSessionFactoryBean;
+import org.mybatis.spring.mapper.MapperScannerConfigurer;
+import org.springframework.context.annotation.Bean;
+
+import javax.sql.DataSource;
+
+public class MybatisConfig {
+
+    @Bean
+    public SqlSessionFactoryBean sqlSessionFactoryBean(DataSource dataSource) {
+        SqlSessionFactoryBean sqlSessionFactoryBean = new SqlSessionFactoryBean();
+        sqlSessionFactoryBean.setDataSource(dataSource);
+        sqlSessionFactoryBean.setTypeAliasesPackage("com.stone.domain");
+        return sqlSessionFactoryBean;
+    }
+
+    @Bean
+    public MapperScannerConfigurer mapperScannerConfigurer() {
+        MapperScannerConfigurer msc = new MapperScannerConfigurer();
+        msc.setBasePackage("com.stone.dao");
+        return msc;
+    }
+}
+```
+
+`AccountService`
+
+```java
+package com.stone.service;
+
+public interface AccountService {
+
+    void transfer(String out, String in, Double money);
+}
+```
+
+`AccountServiceImpl`
+
+```java
+package com.stone.service.impl;
+
+import com.stone.dao.AccountDao;
+import com.stone.service.AccountService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+@Service
+public class AccountServiceImpl implements AccountService {
+
+    @Autowired
+    private AccountDao accountDao;
+
+    public void transfer(String out, String in, Double money) {
+        accountDao.outMoney(out, money);
+        accountDao.inMoney(in, money);
+    }
+}
+```
+
+`AccountDao`
+
+```java
+package com.stone.dao;
+
+import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Update;
+
+public interface AccountDao {
+
+    @Update("update t_account set money = money + #{money} where name = #{name}")
+    void inMoney(@Param("name") String name, @Param("money") Double money);
+
+    @Update("update t_account set money = money - #{money} where name = #{name}")
+    void outMoney(@Param("name") String name, @Param("money") Double money);
+}
+```
+
+测试类如下：
+
+```java
+package com.stone;
+
+import com.stone.config.SpringConfig;
+import com.stone.service.AccountService;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+
+@RunWith(SpringJUnit4ClassRunner.class)
+@ContextConfiguration(classes = SpringConfig.class)
+public class AppTest {
+
+    @Autowired
+    private AccountService accountService;
+
+    @Test
+    public void testTransfer() {
+        accountService.transfer("Tom", "Jerry", 100.0);
+    }
+}
+```
+
+<span style="color:red;">当业务层操作顺利执行完，数据库表数据如下</span>
+
+![t_account表转账操作成功](./images/t_account表转账操作成功.png)
+
+<span style="color:red;">当业务层操作在执行时抛出异常时，数据库表数据如下</span>
+
+```java
+public void transfer(String out, String in, Double money) {
+    accountDao.outMoney(out, money);
+    System.out.println(1 / 0); // 模拟异常
+    accountDao.inMoney(in, money);
+}
+```
+
+![t_account表转账操作抛出异常](./images/t_account表转账操作抛出异常.png)
+
+<span style="color:red;">结果分析：</span>
+
+①当程序正常执行时，两个账户的金额顺利增减，没有问题
+
+②当程序出现异常后，转账失败，但是异常之前的操作成功执行，异常之后的操作没有执行，导致整体业务失败
+
+
+
 https://www.bilibili.com/video/BV1Fi4y1S7ix/?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=40

@@ -13,6 +13,7 @@
         <module name="annotation_third_bean_manager" />
         <module name="di_collection" />
         <module name="annotation_bean" />
+        <module name="bank_account_transfer" />
         <module name="ioc_demo" />
         <module name="di_autoware" />
         <module name="annotation_di" />
