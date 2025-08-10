@@ -5601,7 +5601,7 @@ public class DataSourceTransactionManager {
 
 
 
-**案例：银行转账业务**
+### 案例：银行转账业务
 
 需求：实现任意两个银行账户间的转账操作，即A账户扣减金额，B账户增加金额。
 
@@ -5870,4 +5870,367 @@ public void transfer(String out, String in, Double money) {
 
 
 
-https://www.bilibili.com/video/BV1Fi4y1S7ix/?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=40
+<b style="color:red;">为了解决前面的问题现象，我们需要给业务层添加事务，让异常前后的操作能够同成功，同失败</b>
+
+首先手动恢复数据库数据到原始状态：
+
+![t_account表数据恢复](./images/t_account表数据恢复.png)
+
+然后在业务层方法上添加事务注解`@Transactional`
+
+（*添加在实现类中的方法上也可以，但是更规范的写法是添加在接口中的方法上，这样可以降低耦合度*）
+
+（<span style="color:#0aa344;">注解式事务可以添加到业务方法上表示当前方法开启事务，也可以添加到接口上表示当前接口所有方法开启事务</span>）
+
+```java
+package com.stone.service;
+
+import org.springframework.transaction.annotation.Transactional;
+
+public interface AccountService {
+
+    @Transactional
+    void transfer(String out, String in, Double money);
+}
+```
+
+向Spring容器中注册事务管理器
+
+（<span style="color:#0aa344;">事务管理器要根据实现技术进行选择，MyBatis框架使用的是JDBC事务</span>）
+
+```java
+package com.stone.config;
+
+import com.alibaba.druid.pool.DruidDataSource;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.transaction.PlatformTransactionManager;
+
+import javax.sql.DataSource;
+
+public class JdbcConfig {
+
+    @Value("${jdbc.driver}")
+    private String driver;
+    @Value("${jdbc.url}")
+    private String url;
+    @Value("${jdbc.username}")
+    private String username;
+    @Value("${jdbc.password}")
+    private String password;
+
+    @Bean
+    public DataSource dataSource() {
+        DruidDataSource ds = new DruidDataSource();
+        ds.setDriverClassName(driver);
+        ds.setUrl(url);
+        ds.setUsername(username);
+        ds.setPassword(password);
+        return ds;
+    }
+
+    //配置事务管理器
+    @Bean
+    public PlatformTransactionManager transactionManager(DataSource dataSource) {
+        return new DataSourceTransactionManager(dataSource);
+    }
+}
+```
+
+在Spring配置类中开启注解式事务驱动
+
+```java
+package com.stone.config;
+
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.PropertySource;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
+
+@Configuration
+@ComponentScan(basePackages = "com.stone")
+@PropertySource({"classpath:jdbc.properties"})
+@Import({JdbcConfig.class, MybatisConfig.class})
+@EnableTransactionManagement // 开启注解式事务驱动
+public class SpringConfig {
+}
+```
+
+重新运行测试类中的方法可以看到：当业务层中存在异常时，事务回滚，异常之前的操作也不会被提交，保证了数据的一致性
+
+![t_account表事务回滚](./images/t_account表事务回滚.png)
+
+当我们将异常注释掉之后，再次运行可以看到，业务层操作被成功执行并且事务也完成了提交
+
+![t_account表事务提交](./images/t_account表事务提交.png)
+
+
+
+### Spring事务角色
+
+![Spring事务角色](./images/Spring事务角色.png)
+
+<span style="color:red;">事务管理员</span>：发起事务方，在Spring中通常指代业务层开启事务的方法
+
+<span style="color:red;">事务协调员</span>：加入事务方，在Spring中通常指代数据层方法，也可以是业务层方法
+
+
+
+### 事务相关配置
+
+![事务相关配置](./images/事务相关配置.png)
+
+<span style="color:red;">其中，rollbackFor属性相对更重要，通过它我们可以设置事务在遇到指定异常时进行回滚操作</span>
+
+<span style="color:blue;">Spring事务默认只处理两种异常`Error`和`RuntimeException`，当遇到这两种异常时事务会回滚，除此之外的其他异常，事务不会处理。</span>
+
+通过`rollbackFor`属性，我们可以指定事务在遇到其他异常时也进行回滚操作：
+
+```java
+package com.stone.service;
+
+import org.springframework.transaction.annotation.Transactional;
+
+import java.io.IOException;
+
+public interface AccountService {
+
+    @Transactional(rollbackFor = IOException.class) // 添加事务注解
+    void transfer(String out, String in, Double money) throws IOException;
+}
+```
+
+修改业务层模拟异常类型
+
+```java
+public void transfer(String out, String in, Double money) throws IOException {
+    accountDao.outMoney(out, money);
+    //System.out.println(1 / 0); // 模拟异常
+    if (true) throw new IOException();
+    accountDao.inMoney(in, money);
+}
+```
+
+对测试方法稍作修改后重新运行
+
+```java
+@Test
+public void testTransfer() {
+    try {
+        accountService.transfer("Tom", "Jerry", 100.0);
+    } catch (IOException e) {
+        throw new RuntimeException(e);
+    }
+}
+```
+
+运行结果如下：
+
+![t_account表事务遇到指定异常回滚](./images/t_account表事务遇到指定异常回滚.png)
+
+
+
+#### 案例：转账业务追加日志
+
+需求：实现任意两个账户间转账操作，并对每次转账操作在数据库进行留痕，即A账户扣减金额，B账户增加金额，数据库记录日志。
+
+分析：
+
+①基于转账操作案例添加日志模块，实现数据库中记录日志
+
+②业务层转账操作（transfer），调用扣减金额、增加金额以及记录日志的操作
+
+实现效果预期：<span style="color:#0aa344;">无论转账操作是否成功，均进行转账操作的日志留痕</span>
+
+
+
+日志表设计如下：
+
+```sql
+CREATE TABLE `t_transfer_log` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `info` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `create_time` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+```
+
+新增日志记录业务
+
+`LogDao`
+
+```java
+package com.stone.dao;
+
+import org.apache.ibatis.annotations.Insert;
+
+public interface LogDao {
+
+    @Insert("insert into t_transfer_log (info, create_time) value (#{info}, NOW())")
+    void addLog(String info);
+}
+```
+
+`LogService`
+
+```java
+package com.stone.service;
+
+import org.springframework.transaction.annotation.Transactional;
+
+public interface LogService {
+
+    @Transactional
+    void log(String out, String in, Double money);
+}
+```
+
+`LogServiceImpl`
+
+```java
+package com.stone.service.impl;
+
+import com.stone.dao.LogDao;
+import com.stone.service.LogService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+@Service
+public class LogServiceImpl implements LogService {
+
+    @Autowired
+    private LogDao logDao;
+
+    @Override
+    public void log(String out, String in, Double money) {
+        logDao.addLog("【转账操作】转出方：" + out + "，转入方：" + in + "，金额：" + money);
+    }
+}
+```
+
+<span style="color:red;">在转账业务中调用日志记录业务</span>
+
+`AccountService`
+
+```java
+package com.stone.service;
+
+import org.springframework.transaction.annotation.Transactional;
+
+public interface AccountService {
+
+    @Transactional // 添加事务注解
+    void transfer(String out, String in, Double money);
+}
+```
+
+`AccountServiceImpl`
+
+```java
+package com.stone.service.impl;
+
+import com.stone.dao.AccountDao;
+import com.stone.service.AccountService;
+import com.stone.service.LogService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+@Service
+public class AccountServiceImpl implements AccountService {
+
+    @Autowired
+    private AccountDao accountDao;
+
+    @Autowired
+    private LogService logService;
+
+    public void transfer(String out, String in, Double money) {
+        try {
+            accountDao.outMoney(out, money);
+            accountDao.inMoney(in, money);
+        } finally {
+            logService.log(out, in, money);
+        }
+    }
+}
+```
+
+修改测试方法后重新运行，这次为了区分结果，我们将转账金额修改为50.00
+
+```java
+@Test
+public void testTransfer() {
+    accountService.transfer("Tom", "Jerry", 50.0);
+}
+```
+
+最终运行结果如下
+
+![转账操作记录日志运行结果](./images/转账操作记录日志运行结果.png)
+
+
+
+上面的操作虽然顺利执行了，还是会有问题：<span style="color:red;">当遇到异常时，记录日志的操作也会一并回滚</span>
+
+我们重新给转账操作加上模拟异常，并查看运行结果会发现日志表没有变化
+
+```java
+public void transfer(String out, String in, Double money) {
+    try {
+        accountDao.outMoney(out, money);
+        System.out.println(1 / 0); // 模拟异常
+        accountDao.inMoney(in, money);
+    } finally {
+        logService.log(out, in, money);
+    }
+}
+```
+
+
+
+<b style="color:red;">如何让日志在转账失败（即遇到异常）的情况下也可以新增记录？</b>
+
+首先分析上面的代码：
+
+**LogService**层的事务之所以会回滚是因为它也同样加入了**AccountService**层的事务中
+
+![事务传播行为分析1](./images/事务传播行为分析1.png)
+
+那么我们就需要通过**事务传播行为**去控制**LogService**层的事务单独开启一个事务
+
+![事务传播行为分析2](./images/事务传播行为分析2.png)
+
+
+
+（<span style="color:#ff7500">事务传播行为：事务协调员对事务管理员所携带事务的处理态度</span>）
+
+![事务传播行为的属性值](./images/事务传播行为的属性值.png)
+
+
+
+在`LogService`的事务注解中设置**propagation**属性
+
+```java
+@Transactional(propagation = Propagation.REQUIRES_NEW) // 开启事务，并设置事务的传播行为为开启一个新事务
+void log(String out, String in, Double money);
+```
+
+重新运行测试类中的方法，并查看运行结果
+
+![设置事务传播属性后运行结果](./images/设置事务传播属性后运行结果.png)
+
+
+
+
+
+
+
+## SpringMVC
+
+SpringMVC简介
+
+- SpringMVC技术与Servlet技术功能等同，均属于Web层开发技术
+
+https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=43

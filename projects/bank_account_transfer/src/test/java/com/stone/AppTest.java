@@ -8,6 +8,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+import java.io.IOException;
+
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = SpringConfig.class)
 public class AppTest {
@@ -17,6 +19,6 @@ public class AppTest {
 
     @Test
     public void testTransfer() {
-        accountService.transfer("Tom", "Jerry", 100.0);
+        accountService.transfer("Tom", "Jerry", 50.0);
     }
 }
