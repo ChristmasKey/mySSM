@@ -24,6 +24,7 @@
         <module name="base_config" />
         <module name="bean_instance" />
         <module name="aop_quickstart" />
+        <module name="springmvc_demo" />
         <module name="spring_mybatis" />
         <module name="aop_advice_type" />
         <module name="password_trim_handle" />

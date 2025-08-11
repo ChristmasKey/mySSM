@@ -6231,6 +6231,20 @@ void log(String out, String in, Double money);
 
 SpringMVC简介
 
-- SpringMVC技术与Servlet技术功能等同，均属于Web层开发技术
+- <span style="color:red;">SpringMVC技术与Servlet技术功能等同，均属于Web层开发技术</span>
 
-https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=43
+让我们尝试用这两种不同的技术来实现相同的功能，首先创建一个新的项目工程`springmvw_demo`
+
+![springmvc_demo](./images/springmvc_demo.png)
+
+
+
+### Servlet技术
+
+https://blog.csdn.net/2301_81480721/article/details/143092766
+
+https://blog.csdn.net/m0_48273471/article/details/124663052
+
+https://www.bilibili.com/video/BV1Fi4y1S7ix/?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=43
+
+### SpringMVC技术
