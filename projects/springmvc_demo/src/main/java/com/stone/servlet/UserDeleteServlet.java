@@ -1,4 +1,8 @@
 package com.stone.servlet;
 
-public class UserDeleteServlet {
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+
+@WebServlet("/user/delete")
+public class UserDeleteServlet extends HttpServlet {
 }

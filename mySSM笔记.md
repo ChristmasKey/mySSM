@@ -6241,6 +6241,13 @@ SpringMVC简介
 
 ### Servlet技术
 
+引入依赖，并配置打包形式为war包
+
+```xml
+```
+
+
+
 https://blog.csdn.net/2301_81480721/article/details/143092766
 
 https://blog.csdn.net/m0_48273471/article/details/124663052
