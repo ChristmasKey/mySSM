@@ -9,7 +9,6 @@ import java.io.IOException;
 
 @WebServlet("/user/save")
 public class UserSaveServlet extends HttpServlet {
-
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         // 接收请求参数

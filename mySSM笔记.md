@@ -6229,9 +6229,7 @@ void log(String out, String in, Double money);
 
 ## SpringMVC
 
-SpringMVC简介
-
-- <span style="color:red;">SpringMVC技术与Servlet技术功能等同，均属于Web层开发技术</span>
+<span style="color:red;">SpringMVC技术与Servlet技术功能等同，均属于Web层开发技术</span>
 
 让我们尝试用这两种不同的技术来实现相同的功能，首先创建一个新的项目工程`springmvw_demo`
 
@@ -6241,17 +6239,227 @@ SpringMVC简介
 
 ### Servlet技术
 
-引入依赖，并配置打包形式为war包
+**① 引入依赖，并配置打包形式为war包**
 
 ```xml
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.stone</groupId>
+  <artifactId>springmvc_demo</artifactId>
+  <version>1.0-SNAPSHOT</version>
+
+  <name>springmvc_demo</name>
+
+  <!--指定打包形式为war包-->
+  <packaging>war</packaging>
+
+  <dependencies>
+    <!-- https://mvnrepository.com/artifact/javax.servlet/javax.servlet-api -->
+    <dependency>
+      <groupId>javax.servlet</groupId>
+      <artifactId>javax.servlet-api</artifactId>
+      <version>3.1.0</version>
+      <scope>provided</scope>
+    </dependency>
+  </dependencies>
+</project>
 ```
 
+**② 新建webapp目录**
+
+![新建webapp目录](./images/新建webapp目录.png)
+
+`web.xml`
+
+```xml
+<!DOCTYPE web-app PUBLIC
+        "-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN"
+        "http://java.sun.com/dtd/web-app_2_3.dtd" >
+
+<web-app>
+    <display-name>Archetype Created Web Application</display-name>
+</web-app>
+```
+
+`index.jsp`
+
+```jsp
+<html>
+<body>
+<h2>Hello World!</h2>
+</body>
+</html>
+```
+
+**③ 编写代码**
+
+![编写Servlet相关类](./images/编写Servlet相关类.png)
+
+```java
+package com.stone.servlet;
+
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+
+@WebServlet("/user/save")
+public class UserSaveServlet extends HttpServlet {
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        // 接收请求参数
+        String username = req.getParameter("username");
+        System.out.println("servlet save username: " + username);
+        // 产生响应
+        resp.setContentType("text/json;charset=utf-8");
+        resp.getWriter().write("{'module': 'servlet save'}");
+    }
+
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        this.doGet(req, resp);
+    }
+}
+
+/*********************************分割线*********************************/
+
+package com.stone.servlet;
+
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+
+@WebServlet("/user/select")
+public class UserSelectServlet extends HttpServlet {
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        // 接收请求参数
+        String username = req.getParameter("username");
+        System.out.println("servlet select username: " + username);
+        // 产生响应
+        resp.setContentType("text/json;charset=utf-8");
+        resp.getWriter().write("{'module': 'servlet select'}");
+    }
+
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        this.doGet(req, resp);
+    }
+}
+
+/*********************************分割线*********************************/
+
+package com.stone.servlet;
+
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+
+@WebServlet("/user/update")
+public class UserUpdateServlet extends HttpServlet {
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        // 接收请求参数
+        String username = req.getParameter("username");
+        System.out.println("servlet update username：" + username);
+        // 产生响应
+        resp.setContentType("text/json;charset=utf-8");
+        resp.getWriter().write("{'module': 'servlet update'}");
+    }
+
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        this.doGet(req, resp);
+    }
+}
+
+/*********************************分割线*********************************/
+
+package com.stone.servlet;
+
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+
+@WebServlet("/user/delete")
+public class UserDeleteServlet extends HttpServlet {
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        // 接收请求参数
+        String username = req.getParameter("username");
+        System.out.println("servlet delete username: " + username);
+        // 产生响应
+        resp.setContentType("text/json;charset=utf-8");
+        resp.getWriter().write("{'module': 'servlet delete'}");
+    }
+
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        this.doGet(req, resp);
+    }
+}
+```
+
+**④配置Tomcat**
+
+![IDEA配置Tomcat](./images/IDEA配置Tomcat.png)
+
+**⑤启动Tomcat，并访问地址**
+
+![servlet运行结果](./images/servlet运行结果.png)
 
 
-https://blog.csdn.net/2301_81480721/article/details/143092766
 
-https://blog.csdn.net/m0_48273471/article/details/124663052
+### SpringMVC简介
 
-https://www.bilibili.com/video/BV1Fi4y1S7ix/?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=43
+![Web项目请求流程](./images/Web项目请求流程.png)
 
-### SpringMVC技术
+概述：<span style="color:blue;">SpringMVC是一种基于Java实现MVC模型的轻量级Web框架</span>
+
+优点
+
+- 使用简单，开发便捷（相比于Servlet）
+- 灵活性强
+
+
+
+### 入门案例
+
+**① 使用SpringMVC技术需要先导入对应的坐标与Servlet坐标**
+
+```xml
+<dependencies>
+    <!-- https://mvnrepository.com/artifact/javax.servlet/javax.servlet-api -->
+    <dependency>
+        <groupId>javax.servlet</groupId>
+        <artifactId>javax.servlet-api</artifactId>
+        <version>3.1.0</version>
+        <scope>provided</scope>
+    </dependency>
+    <dependency>
+        <groupId>org.springframework</groupId>
+        <artifactId>spring-webmvc</artifactId>
+        <version>5.3.27</version>
+    </dependency>
+</dependencies>
+```
+
+**② 创建SpringMVC控制器类（等同于Servlet功能）**
+
+```java
+```
+
+https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=44
