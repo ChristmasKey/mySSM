@@ -31,5 +31,8 @@
         <module name="di_constructor" />
       </profile>
     </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="springmvc_01_quickstart" target="1.8" />
+    </bytecodeTargetLevel>
   </component>
 </project>

@@ -6438,6 +6438,8 @@ public class UserDeleteServlet extends HttpServlet {
 
 ### 入门案例
 
+<span style="color:red;">我们继续在原项目上编写</span>
+
 **① 使用SpringMVC技术需要先导入对应的坐标与Servlet坐标**
 
 ```xml
@@ -6449,6 +6451,7 @@ public class UserDeleteServlet extends HttpServlet {
         <version>3.1.0</version>
         <scope>provided</scope>
     </dependency>
+    <!--SpringMVC依赖-->
     <dependency>
         <groupId>org.springframework</groupId>
         <artifactId>spring-webmvc</artifactId>
@@ -6460,6 +6463,188 @@ public class UserDeleteServlet extends HttpServlet {
 **② 创建SpringMVC控制器类（等同于Servlet功能）**
 
 ```java
+package com.stone.springmvc.controller;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+//@Controller注解：表现层注解，功能与@Component类似，将类交给spring管理
+@Controller // 将该类定义成Bean
+public class UserController {
+
+    @RequestMapping("/save") //@RequestMapping注解：请求映射，用于建立请求URL和处理请求方法之间的对应关系
+    @ResponseBody //@ResponseBody注解：将Controller方法返回值作为响应体返回给客户端
+    public String save(String username) {
+        System.out.println("springmvc save username: " + username);
+        return "{'module':'springmvc save'}";
+    }
+
+    @RequestMapping("/update")
+    @ResponseBody
+    public String update(String username) {
+        System.out.println("springmvc update username: " + username);
+        return "{'module':'springmvc update'}";
+    }
+
+    @RequestMapping("/select")
+    @ResponseBody
+    public String select(String username) {
+        System.out.println("springmvc select username: " + username);
+        return "{'module':'springmvc select'}";
+    }
+
+    @RequestMapping("/delete")
+    @ResponseBody
+    public String delete(String username) {
+        System.out.println("springmvc delete username: " + username);
+        return "{'module':'springmvc delete'}";
+    }
+}
 ```
 
-https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=44
+**③ 初始化SpringMVC环境（同Spring环境），设定SpringMVC加载对应的Bean**
+
+<span style="color:red;">SpringMVC是基于Spring的，所以同样需要编写配置类，并指定扫描包，将包下的Bean加载到Spring容器中来。</span>
+
+```java
+package com.stone.config;
+
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
+
+// 创建SpringMVC的配置类，加载controller包下对应的Bean
+@Configuration
+@ComponentScan(basePackages = "com.stone.springmvc.controller")
+public class SpringMvcConfig {
+}
+```
+
+**④ 初始化Servlet容器，加载SpringMVC环境，并设置SpringMVC技术处理的请求**
+
+<span style="color:red;">为了让Tomcat启动后，能够识别并加载SpringMVC的相关配置</span>
+
+```java
+package com.stone.config;
+
+import org.springframework.web.context.WebApplicationContext;
+import org.springframework.web.context.support.AnnotationConfigWebApplicationContext;
+import org.springframework.web.servlet.support.AbstractDispatcherServletInitializer;
+
+// 定义一个Servlet容器启动的配置类，在其中加载Spring的配置
+public class ServletContainersInitConfig extends AbstractDispatcherServletInitializer {
+    // 加载SpringMVC容器配置类
+    @Override
+    protected WebApplicationContext createServletApplicationContext() {
+        // 这个对象类似于前面学习Spring时的 AnnotationConfigApplicationContext对象
+        // 区别在于它是专门用于Web环境下加载 SpringMVC 配置类的
+        AnnotationConfigWebApplicationContext ctx = new AnnotationConfigWebApplicationContext();
+        ctx.register(SpringMvcConfig.class);
+        return ctx;
+    }
+
+    // 设置SpringMVC的请求映射路径
+    // 指定哪些请求归属SpringMVC处理
+    @Override
+    protected String[] getServletMappings() {
+        return new String[]{"/"};
+    }
+
+    // 加载Spring容器配置类
+    @Override
+    protected WebApplicationContext createRootApplicationContext() {
+        return null;
+    }
+}
+```
+
+**⑤ 在pom.xml中配置Tomcat插件**
+
+```xml
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.stone</groupId>
+    <artifactId>springmvc_demo</artifactId>
+    <version>1.0-SNAPSHOT</version>
+
+    <name>springmvc_demo</name>
+
+    <!--指定打包形式为war包-->
+    <packaging>war</packaging>
+
+    <dependencies>
+        <!-- https://mvnrepository.com/artifact/javax.servlet/javax.servlet-api -->
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
+            <version>3.1.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <!--SpringMVC依赖-->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-webmvc</artifactId>
+            <version>5.3.27</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!--Tomcat插件-->
+            <plugin>
+                <groupId>org.apache.tomcat.maven</groupId>
+                <artifactId>tomcat7-maven-plugin</artifactId>
+                <version>2.2</version>
+                <configuration>
+                    <port>8099</port>
+                    <path>/</path>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+```
+
+![添加Tomcat的maven插件](./images/添加Tomcat的maven插件.png)
+
+
+
+<b style="color:red;">遇到一个小问题：</b>
+
+启动Tomcat插件后，控制台得到如下画面即为启动成功（<span style="color:blue;">如果没有启动成功，记得去检查Tomcat插件配置的端口是否冲突了</span>）
+
+![Tomcat插件启动成功](./images/Tomcat插件启动成功.png)
+
+随后我们访问Tomcat地址，得到如下结果：<span style="color:blue;">从报错信息可以知道Servlet并没有找到我们的控制层方法</span>
+
+![Tomcat运行SpringMVC项目1](./images/Tomcat运行SpringMVC项目1.png)
+
+<span style="color:#ff7500;">经过排查，发现原因是由于引入的SpringMVC依赖版本太高导致的，因此我们将SpringMVC版本降低试试</span>
+
+```xml
+<!--SpringMVC依赖-->
+<dependency>
+    <groupId>org.springframework</groupId>
+    <artifactId>spring-webmvc</artifactId>
+    <!--<version>5.3.27</version>-->
+    <version>5.2.15.RELEASE</version>
+</dependency>
+```
+
+重新运行Tomcat并访问地址后发现成功访问！
+
+![Tomcat运行SpringMVC项目2](./images/Tomcat运行SpringMVC项目2.png)
+
+
+
+#### 关于Servlet容器的配置类
+
+![Servlet容器配置类讲解](./images/Servlet容器配置类讲解.png)
+
+
+
+#### 工作流程分析
+
+https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=45
