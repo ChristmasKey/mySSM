@@ -6647,4 +6647,26 @@ public class ServletContainersInitConfig extends AbstractDispatcherServletInitia
 
 #### 工作流程分析
 
-https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=45
+**启动服务器初始化过程**
+
+1. 服务器启动，执行`ServletContainersInitConfig`类，初始化Web容器
+2. 执行`createServletApplicationContext`方法，创建`WebApplicationContext`对象
+3. 加载`SpringMvcConfig`类
+4. 执行**@ComponentScan**加载对应的Bean
+5. 加载`UserController`类，每个**@RequestMapping**的名称对应一个具体的方法
+6. 执行`getServletMappings`方法，定义所有的请求都通过SpringMVC
+
+![Servlet容器图解](./images/Servlet容器图解.png)
+
+
+
+**单次请求的过程**
+
+1. 发送请求 localhost/save
+2. Web容器发现所有请求都经过SpringMVC，将请求交给SpringMVC处理
+3. 解析请求路径 /save
+4. 由 /save 匹配执行对应的方法 save()
+5. 执行 save() 方法
+6. 检测到有**@ResponseBody**注解，直接将 save() 方法的返回值作为响应体返回给请求方
+
+https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=46
