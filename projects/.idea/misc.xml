@@ -28,12 +28,8 @@
         <option value="$PROJECT_DIR$/bank_account_transfer/pom.xml" />
         <option value="$PROJECT_DIR$/springmvc_demo/pom.xml" />
         <option value="$PROJECT_DIR$/springmvc_01_quickstart/pom.xml" />
+        <option value="$PROJECT_DIR$/springmvc_bean_load/pom.xml" />
       </list>
-    </option>
-    <option name="ignoredFiles">
-      <set>
-        <option value="$PROJECT_DIR$/springmvc_01_quickstart/pom.xml" />
-      </set>
     </option>
   </component>
   <component name="ProjectRootManager" version="2" languageLevel="JDK_1_8" project-jdk-name="1.8" project-jdk-type="JavaSDK">

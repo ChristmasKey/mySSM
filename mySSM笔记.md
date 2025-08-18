@@ -6669,4 +6669,39 @@ public class ServletContainersInitConfig extends AbstractDispatcherServletInitia
 5. 执行 save() 方法
 6. 检测到有**@ResponseBody**注解，直接将 save() 方法的返回值作为响应体返回给请求方
 
+
+
+#### Bean加载控制
+
+在一个项目中除了表现层（Controller）的Bean以外，还有业务层（Service）的Bean和其他Bean（例如三方Bean）需要管理。
+
+在前面的内容中，我们已经知道：
+
+- 表现层的Bean交由SpringMVC进行管理
+- 除此之外的其他Bean都统一交由Spring进行管理
+
+
+
+<span style="color:red;">那么我们如何避免Spring错误的加载到SpringMVC的Bean？</span>
+
+- SpringMVC相关Bean加载控制
+    - SpringMVC加载的Bean均在**com.stone.controller**包下
+- Spring相关Bean加载控制
+    - 方式一：Spring加载的Bean设置扫描包为**com.stone**，然后排除掉**controller**包
+    - 方式二：Spring加载的Bean设置扫描包精准到**service**、**dao**等
+
+
+
+我们创建一个新的项目工程`springmvc_bean_load`，并尝试上面两种处理方式
+
+![springmvc_bean_load](./images/springmvc_bean_load.png)
+
+项目代码基本内容如下：
+
+`pom.xml`
+
+```xml
+```
+
 https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=46
+
