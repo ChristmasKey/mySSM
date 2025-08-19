@@ -6689,6 +6689,7 @@ public class ServletContainersInitConfig extends AbstractDispatcherServletInitia
 - Spring相关Bean加载控制
     - 方式一：Spring加载的Bean设置扫描包为**com.stone**，然后排除掉**controller**包
     - 方式二：Spring加载的Bean设置扫描包精准到**service**、**dao**等
+    - 方式三：不区分Spring与SpringMVC的环境，将所有Bean都加载到同一个环境中
 
 
 
@@ -6701,7 +6702,144 @@ public class ServletContainersInitConfig extends AbstractDispatcherServletInitia
 `pom.xml`
 
 ```xml
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.stone</groupId>
+    <artifactId>springmvc_bean_load</artifactId>
+    <version>1.0-SNAPSHOT</version>
+
+    <name>springmvc_bean_load</name>
+
+    <packaging>war</packaging>
+
+    <dependencies>
+        <!--Spring-->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
+            <version>5.2.15.RELEASE</version>
+        </dependency>
+    </dependencies>
+</project>
 ```
 
-https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=46
+`UserController`
 
+```java
+package com.stone.controller;
+
+import org.springframework.stereotype.Controller;
+
+@Controller
+public class UserController {
+}
+```
+
+`UserService`
+
+```java
+package com.stone.service;
+
+import com.stone.domain.User;
+
+public interface UserService {
+
+    void save(User user);
+}
+```
+
+`UserServiceImpl`
+
+```java
+package com.stone.service.impl;
+
+import com.stone.domain.User;
+import com.stone.service.UserService;
+import org.springframework.stereotype.Service;
+
+@Service
+public class UserServiceImpl implements UserService {
+
+    public void save(User user) {
+        System.out.println("user service...");
+    }
+}
+```
+
+`SpringMvcConfig`
+
+```java
+package com.stone.config;
+
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+@ComponentScan(basePackages = "com.stone.controller")
+public class SpringMvcConfig {
+}
+```
+
+
+
+<span style="color:red;">接下来我们编写SpringConfig，并尝试用两种方式来排除controller层的Bean</span>
+
+```java
+package com.stone.config;
+
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.FilterType;
+import org.springframework.stereotype.Controller;
+
+@Configuration
+@ComponentScan(basePackages = "com.stone", excludeFilters = @ComponentScan.Filter(// 方式一：配置过滤器
+        type = FilterType.ANNOTATION,// 指定过滤策略：按注解过滤
+        classes = Controller.class // 指定注解类：Controller注解类
+))
+// @ComponentScan(basePackages = {"com.stone.service", "com.stone.dao"}) // 方式二：精准扫描包
+public class SpringConfig {
+}
+```
+
+编写main方法，验证controller层的Bean是否被成功排除了：
+
+```java
+package com.stone;
+
+import com.stone.config.SpringConfig;
+import com.stone.controller.UserController;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+
+public class App {
+
+    public static void main(String[] args) {
+        AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext();
+        // 注册Spring配置类，效果等同写法：new AnnotationConfigApplicationContext(SpringConfig.class);
+        context.register(SpringConfig.class);
+        // 手动刷新上下文
+        context.refresh();
+
+        // 尝试获取Controller层的Bean，来验证excludeFilters过滤器是否生效
+        // 注意：在运行main方法之前必须把SpringMvcConfig类中的@Configuration注解注释掉
+        // 否则已经被排除的Controller层的Bean会被SpringMVC重新加载回来
+        System.out.println(context.getBean(UserController.class));
+    }
+}
+```
+
+从最终运行结果可以看到，我们成功将controller层的Bean排除了
+
+![Spring过滤controller层的Bean](./images/Spring过滤controller层的Bean.png)
+
+但是，如果我们放开`SpringMvcConfig`中的注释，则controller层的Bean会被SpringMVC重新加载进来
+
+![SpringMVC加载controller层的Bean](./images/SpringMVC加载controller层的Bean.png)
+
+
+
+
+
+https://www.bilibili.com/video/BV1Fi4y1S7ix/?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=46
