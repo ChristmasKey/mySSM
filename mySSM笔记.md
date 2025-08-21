@@ -6689,7 +6689,7 @@ public class ServletContainersInitConfig extends AbstractDispatcherServletInitia
 - Spring相关Bean加载控制
     - 方式一：Spring加载的Bean设置扫描包为**com.stone**，然后排除掉**controller**包
     - 方式二：Spring加载的Bean设置扫描包精准到**service**、**dao**等
-    - 方式三：不区分Spring与SpringMVC的环境，将所有Bean都加载到同一个环境中
+    - <span style="color:green;">方式三：不区分Spring与SpringMVC的环境，将所有Bean都加载到同一个环境中</span>
 
 
 
@@ -6840,6 +6840,91 @@ public class App {
 
 
 
+<span style="color:blue;">关于`@ComponentScan`注解的excludeFilters属性</span>
+
+- excludeFilters：排除扫描路径中指定的Bean，需要指定类别（type）与具体项（classes）
+- includeFilters：用法与excludeFilters相似，功能却完全相反。加载指定的Bean，需要指定类别（type）与具体项（classes）
 
 
-https://www.bilibili.com/video/BV1Fi4y1S7ix/?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=46
+
+<span style="color:red;">完成了SpringConfig的编写后，我们就需要将它同样加载到Servlet容器中</span>
+
+首先导入相关依赖
+
+```xml
+<dependency>
+    <groupId>org.springframework</groupId>
+    <artifactId>spring-webmvc</artifactId>
+    <version>5.2.15.RELEASE</version>
+</dependency>
+<dependency>
+    <groupId>javax.servlet</groupId>
+    <artifactId>javax.servlet-api</artifactId>
+    <version>3.1.0</version>
+</dependency>
+```
+
+然后编写`ServletContainersInitConfig`
+
+```java
+package com.stone.config;
+
+import org.springframework.web.context.WebApplicationContext;
+import org.springframework.web.context.support.AnnotationConfigWebApplicationContext;
+import org.springframework.web.servlet.support.AbstractDispatcherServletInitializer;
+
+public class ServletContainersInitConfig extends AbstractDispatcherServletInitializer {
+
+    protected WebApplicationContext createServletApplicationContext() {
+        AnnotationConfigWebApplicationContext context = new AnnotationConfigWebApplicationContext();
+        context.register(SpringMvcConfig.class);
+        return context;
+    }
+
+    protected String[] getServletMappings() {
+        return new String[]{"/"};
+    }
+
+    // 加载Spring配置
+    protected WebApplicationContext createRootApplicationContext() {
+        // 加载Spring配置的写法与加载SpringMVC配置的写法是一样的
+        AnnotationConfigWebApplicationContext context = new AnnotationConfigWebApplicationContext();
+        // 唯一的区别就是修改对应的配置类
+        context.register(SpringMvcConfig.class);
+        return context;
+    }
+}
+```
+
+
+
+<span style="color:blue;">对于上面的加载配置类的写法，还有更简化的版本</span>
+
+```java
+package com.stone.config;
+
+import org.springframework.web.servlet.support.AbstractAnnotationConfigDispatcherServletInitializer;
+
+// 简化写法
+public class ServletContainersInitConfig extends AbstractAnnotationConfigDispatcherServletInitializer {
+    protected Class<?>[] getRootConfigClasses() {
+        return new Class[]{SpringConfig.class};
+    }
+
+    protected Class<?>[] getServletConfigClasses() {
+        return new Class[]{SpringMvcConfig.class};
+    }
+
+    protected String[] getServletMappings() {
+        return new String[]{"/"};
+    }
+}
+```
+
+
+
+### 请求与响应
+
+首先创建一个新的项目工程`springmvc_request_mapping`
+
+https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=48
