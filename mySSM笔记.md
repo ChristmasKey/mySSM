@@ -6925,6 +6925,8 @@ public class ServletContainersInitConfig extends AbstractAnnotationConfigDispatc
 
 ### 请求与响应
 
+#### 请求路径
+
 首先创建一个新的项目工程`springmvc_request_mapping`
 
-https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=48
+https://www.bilibili.com/video/BV1Fi4y1S7ix/?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=48
