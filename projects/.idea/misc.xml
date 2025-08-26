@@ -29,6 +29,7 @@
         <option value="$PROJECT_DIR$/springmvc_demo/pom.xml" />
         <option value="$PROJECT_DIR$/springmvc_01_quickstart/pom.xml" />
         <option value="$PROJECT_DIR$/springmvc_bean_load/pom.xml" />
+        <option value="$PROJECT_DIR$/springmvc_request_mapping/pom.xml" />
       </list>
     </option>
   </component>

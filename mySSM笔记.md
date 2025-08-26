@@ -6929,4 +6929,204 @@ public class ServletContainersInitConfig extends AbstractAnnotationConfigDispatc
 
 首先创建一个新的项目工程`springmvc_request_mapping`
 
-https://www.bilibili.com/video/BV1Fi4y1S7ix/?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=48
+![springmvc_request_mapping](./images/springmvc_request_mapping.png)
+
+项目代码基本内容如下：
+
+`pom.xml`
+
+```xml
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.stone</groupId>
+  <artifactId>springmvc_request_mapping</artifactId>
+  <version>1.0-SNAPSHOT</version>
+
+  <packaging>war</packaging>
+
+  <name>springmvc_request_mapping</name>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-webmvc</artifactId>
+      <version>5.2.15.RELEASE</version>
+    </dependency>
+    <dependency>
+      <groupId>javax.servlet</groupId>
+      <artifactId>javax.servlet-api</artifactId>
+      <version>3.1.0</version>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <!--Tomcat插件-->
+      <plugin>
+        <groupId>org.apache.tomcat.maven</groupId>
+        <artifactId>tomcat7-maven-plugin</artifactId>
+        <version>2.2</version>
+        <configuration>
+          <port>8090</port>
+          <path>/</path>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>
+```
+
+`SpringMvcConfig`
+
+```java
+package com.stone.config;
+
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+@ComponentScan(basePackages = "com.stone.controller")
+public class SpringMvcConfig {
+}
+
+```
+
+`ServletContainersInitConfig`
+
+```java
+package com.stone.config;
+
+import org.springframework.web.servlet.support.AbstractAnnotationConfigDispatcherServletInitializer;
+
+public class ServletContainersInitConfig extends AbstractAnnotationConfigDispatcherServletInitializer {
+    protected Class<?>[] getRootConfigClasses() {
+        return new Class[0];
+    }
+
+    protected Class<?>[] getServletConfigClasses() {
+        return new Class[]{SpringMvcConfig.class};
+    }
+
+    protected String[] getServletMappings() {
+        return new String[]{"/"};
+    }
+}
+```
+
+`UserController`
+
+```java
+package com.stone.controller;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+@Controller
+public class UserController {
+
+    @RequestMapping("/save")
+    @ResponseBody
+    public String save() {
+        System.out.println("user save...");
+        return "{'module': 'user save'}";
+    }
+
+    @RequestMapping("/delete")
+    @ResponseBody
+    public String delete() {
+        System.out.println("user delete...");
+        return "{'module': 'user delete'}";
+    }
+}
+```
+
+`BookController`
+
+```java
+package com.stone.controller;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+@Controller
+public class BookController {
+
+    @RequestMapping("/save")
+    @ResponseBody
+    public String save() {
+        System.out.println("book save...");
+        return "{'module': 'book save'}";
+    }
+}
+```
+
+
+
+<b style="color:red;">当我们启动Tomcat来运行项目时，会发现报错</b>
+
+![springmvc_request_mapping运行报错](./images/springmvc_request_mapping运行报错.png)
+
+通过观察上面的代码我们不难发现，报错的原因是由于我们设置了两个 **/save** 的请求路径，从而导致了映射的冲突。
+
+<span style="color:#00e500;">为此我们可以通过加上不同的请求路径前缀来将二者区分开（既可以逐个路径加上，也可以在类上统一加上）</span>
+
+`UserController`
+
+```java
+package com.stone.controller;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+@Controller
+// @RequestMapping("/user") // 统一加上请求路径前缀
+public class UserController {
+
+    @RequestMapping("/user/save")
+    @ResponseBody
+    public String save() {
+        System.out.println("user save...");
+        return "{'module': 'user save'}";
+    }
+
+    @RequestMapping("/user/delete")
+    @ResponseBody
+    public String delete() {
+        System.out.println("user delete...");
+        return "{'module': 'user delete'}";
+    }
+}
+```
+
+`BookController`
+
+```java
+package com.stone.controller;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+@Controller
+// @RequestMapping("/book") // 统一加上请求路径前缀
+public class BookController {
+
+    @RequestMapping("/book/save")
+    @ResponseBody
+    public String save() {
+        System.out.println("book save...");
+        return "{'module': 'book save'}";
+    }
+}
+```
+
+
+
+#### 请求方式
+
+https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=49
