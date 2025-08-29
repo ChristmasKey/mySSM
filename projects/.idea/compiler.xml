@@ -8,6 +8,7 @@
         <outputRelativeToContentRoot value="true" />
         <module name="container" />
         <module name="aop_advice_data" />
+        <module name="springmvc_request_param" />
         <module name="annotation_third_bean_manager" />
         <module name="di_collection" />
         <module name="annotation_bean" />

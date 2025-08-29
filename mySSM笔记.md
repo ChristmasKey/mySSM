@@ -6927,7 +6927,7 @@ public class ServletContainersInitConfig extends AbstractAnnotationConfigDispatc
 
 #### 请求路径
 
-首先创建一个新的项目工程`springmvc_request_mapping`
+创建一个新的项目工程`springmvc_request_mapping`
 
 ![springmvc_request_mapping](./images/springmvc_request_mapping.png)
 
@@ -7127,6 +7127,13 @@ public class BookController {
 
 
 
-#### 请求方式
+#### 请求方式&参数
 
-https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=49
+创建一个新的项目工程`springmvc_request_param`
+
+![springmvc_request_param](./images/springmvc_request_param.png)
+
+https://www.bilibili.com/video/BV1Fi4y1S7ix/?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=49
+
+
+
