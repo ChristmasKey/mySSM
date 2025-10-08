@@ -7133,7 +7133,600 @@ public class BookController {
 
 ![springmvc_request_param](./images/springmvc_request_param.png)
 
-https://www.bilibili.com/video/BV1Fi4y1S7ix/?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=49
+项目代码基本内容如下：
+
+`pom.xml`
+
+```xml
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.stone</groupId>
+  <artifactId>springmvc_request_param</artifactId>
+  <version>1.0-SNAPSHOT</version>
+
+  <packaging>war</packaging>
+
+  <name>springmvc_request_param</name>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-webmvc</artifactId>
+      <version>5.2.15.RELEASE</version>
+    </dependency>
+    <dependency>
+      <groupId>javax.servlet</groupId>
+      <artifactId>javax.servlet-api</artifactId>
+      <version>3.1.0</version>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <!--Tomcat插件-->
+      <plugin>
+        <groupId>org.apache.tomcat.maven</groupId>
+        <artifactId>tomcat7-maven-plugin</artifactId>
+        <version>2.2</version>
+        <configuration>
+          <port>8090</port>
+          <path>/</path>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>
+```
+
+`SpringMvcConfig`
+
+```java
+package com.stone.config;
+
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+@ComponentScan(basePackages = "com.stone.controller")
+public class SpringMvcConfig {
+}
+```
+
+`ServletContainersInitConfig`
+
+```java
+package com.stone.config;
+
+import org.springframework.web.servlet.support.AbstractAnnotationConfigDispatcherServletInitializer;
+
+public class ServletContainersInitConfig extends AbstractAnnotationConfigDispatcherServletInitializer {
+    @Override
+    protected Class<?>[] getRootConfigClasses() {
+        return new Class[0];
+    }
+
+    @Override
+    protected Class<?>[] getServletConfigClasses() {
+        return new Class[]{SpringMvcConfig.class};
+    }
+
+    @Override
+    protected String[] getServletMappings() {
+        return new String[]{"/"};
+    }
+}
+```
+
+`UserController`
+
+```java
+package com.stone.controller;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+@Controller
+public class UserController {
+
+    @RequestMapping("/commonParam")
+    @ResponseBody
+    public String commonParam(){
+        return "{'module':'common param'}";
+    }
+}
+```
 
 
 
+<b style="color:red;">当我们启动Tomcat来运行项目后，使用接口调试工具来发送对应的请求可以看到如下结果</b>
+
+![调试工具发送commonParam请求](./images/调试工具发送commonParam请求.png)
+
+
+
+**如果我们需要在Get请求中发送普通参数，可以这么做**：
+
+`UserController`
+
+```java
+package com.stone.controller;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+@Controller
+public class UserController {
+
+    @RequestMapping("/commonParam")
+    @ResponseBody
+    public String commonParam(String name, int age){
+        System.out.println("普通参数传递 name ==>" + name + ", age ==>" + age);
+        return "{'module':'common param'}";
+    }
+}
+```
+
+发送请求
+
+![调试工具发送commonParam请求带普通参数](./images/调试工具发送commonParam请求带普通参数.png)
+
+查看控制台打印结果
+
+![commonParam请求控制台打印结果](./images/commonParam请求控制台打印结果.png)
+
+<span style="color:blue;">Tips：如果System.out.println语句输出的中文在Tomcat控制台中显示乱码，可以在启动配置项中添加如下参数</span>
+
+![启动配置项中设置文件编码参数](./images/启动配置项中设置文件编码参数.png)
+
+
+
+**同理，如果我们需要在Post请求中发送普通参数，可以这么做**：
+
+![调试工具以POST方式发送commonParam请求带普通参数.png](./images/调试工具以POST方式发送commonParam请求带普通参数.png)
+
+查看控制台打印结果
+
+![commonParam请求控制台打印结果2](./images/commonParam请求控制台打印结果2.png)
+
+
+
+**此外，如果我们想要在Post请求中发送中文参数会遇到乱码问题**
+
+![调试工具以POST方式发送commonParam请求带中文参数](./images/调试工具以POST方式发送commonParam请求带中文参数.png)
+
+查看控制台打印结果
+
+![commonParam请求控制台打印结果3](./images/commonParam请求控制台打印结果3.png)
+
+<span style="color:red;">因此我们需要设置一个过滤器来处理乱码问题</span>
+
+```java
+package com.stone.config;
+
+import org.springframework.web.filter.CharacterEncodingFilter;
+import org.springframework.web.servlet.support.AbstractAnnotationConfigDispatcherServletInitializer;
+
+import javax.servlet.Filter;
+
+public class ServletContainersInitConfig extends AbstractAnnotationConfigDispatcherServletInitializer {
+
+    ...
+
+    // 设置过滤器处理POST请求中文传参乱码问题
+    @Override
+    protected Filter[] getServletFilters() {
+        CharacterEncodingFilter filter = new CharacterEncodingFilter();
+        filter.setEncoding("UTF-8");
+        return new Filter[]{filter};
+    }
+}
+```
+
+重新启动项目后，再次发送请求并查看控制台打印结果
+
+![commonParam请求控制台打印结果4](./images/commonParam请求控制台打印结果4.png)
+
+
+
+#### 请求参数的种类
+
+参数种类：
+
+- 普通参数
+- POJO类型参数
+- 嵌套POJO类型参数
+- 数组类型参数
+- 集合类型参数
+
+
+
+##### 普通参数
+
+内容同上，但**如果传参的名称和形参的名称不一样**应该怎么处理？
+
+```java
+package com.stone.controller;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+@Controller
+public class UserController {
+
+    @RequestMapping("/commonParam")
+    @ResponseBody
+    public String commonParam(String name, int age) {
+        System.out.println("普通参数传递 name ==>" + name + ", age ==>" + age);
+        return "{'module':'common param'}";
+    }
+
+    @RequestMapping("/commonParamDifferentName")
+    @ResponseBody
+    public String commonParamDifferentName(String username, int age) { // 参数名和页面传递的参数名不一致
+        System.out.println("普通参数传递 username ==>" + username + ", age ==>" + age);
+        return "{'module':'common param'}";
+    }
+}
+```
+
+
+
+![调试工具发送commonParamDifferentName请求](./images/调试工具发送commonParamDifferentName请求.png)
+
+
+
+![commonParamDifferentName请求控制台打印结果](./images/commonParamDifferentName请求控制台打印结果.png)
+
+<span style="color:red;">通过在形参前加上@RequestParam注解来绑定其和请求传参的映射关系</span>
+
+```java
+@RequestMapping("/commonParamDifferentName")
+@ResponseBody
+public String commonParamDifferentName(@RequestParam("name") String username, @RequestParam("age") int age) {
+    System.out.println("普通参数传递 username ==>" + username + ", age ==>" + age);
+    return "{'module':'common param'}";
+}
+```
+
+![commonParamDifferentName请求控制台打印结果2](./images/commonParamDifferentName请求控制台打印结果2.png)
+
+
+
+##### POJO类型参数
+
+我们定义一个实体类
+
+```java
+package com.stone.domain;
+
+public class User {
+    private String name;
+    private int age;
+
+    @Override
+    public String toString() {
+        return "User{" +
+                "name='" + name + '\'' +
+                ", age=" + age +
+                '}';
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public int getAge() {
+        return age;
+    }
+
+    public void setAge(int age) {
+        this.age = age;
+    }
+}
+```
+
+并将其作为方法的形参
+
+```java
+@RequestMapping("/pojoParam")
+@ResponseBody
+public String pojoParam(User user) {
+    System.out.println("pojo参数传递 user ==>" + user);
+    return "{'module':'pojo param'}";
+}
+```
+
+重新启动项目并发送请求
+
+![调试工具发送pojoParam请求](./images/调试工具发送pojoParam请求.png)
+
+查看控制台打印结果可以知道，<span style="color:red;">传参名和POJO类属性名一致时，会自动映射</span>
+
+![pojoParam请求控制台打印结果](./images/pojoParam请求控制台打印结果.png)
+
+
+
+##### 嵌套POJO类型参数
+
+我们定义另一个实体类Address
+
+```java
+package com.stone.domain;
+
+public class Address {
+
+    private String province;
+    private String city;
+
+    @Override
+    public String toString() {
+        return "Address{" +
+                "province='" + province + '\'' +
+                ", city='" + city + '\'' +
+                '}';
+    }
+
+    public String getProvince() {
+        return province;
+    }
+
+    public void setProvince(String province) {
+        this.province = province;
+    }
+
+    public String getCity() {
+        return city;
+    }
+
+    public void setCity(String city) {
+        this.city = city;
+    }
+}
+```
+
+并将它设为User类的属性
+
+```java
+package com.stone.domain;
+
+public class User {
+    private String name;
+    private int age;
+
+    private Address address;
+
+    @Override
+    public String toString() {
+        return "User{" +
+                "name='" + name + '\'' +
+                ", age=" + age +
+                ", address=" + address +
+                '}';
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public int getAge() {
+        return age;
+    }
+
+    public void setAge(int age) {
+        this.age = age;
+    }
+
+    public Address getAddress() {
+        return address;
+    }
+
+    public void setAddress(Address address) {
+        this.address = address;
+    }
+}
+```
+
+然后在Controller中定义一个方法
+
+```java
+@RequestMapping("/pojoContainPojoParam")
+@ResponseBody
+public String pojoContainPojoParam(User user) {
+    System.out.println("pojo嵌套pojo参数传递 user ==>" + user);
+    return "{'module':'pojo contain pojo param'}";
+}
+```
+
+重新启动项目并发送请求
+
+![调试工具发送pojoContainPojoParam请求](./images/调试工具发送pojoContainPojoParam请求.png)
+
+查看控制台打印结果
+
+![pojoContainPojoParam请求控制台打印结果](./images/pojoContainPojoParam请求控制台打印结果.png)
+
+
+
+##### 数组类型参数
+
+我们定义一个方法，将数组作为形参，并尝试发送请求
+
+```java
+@RequestMapping("/arrayParam")
+@ResponseBody
+public String arrayParam(String[] likes) {
+    System.out.println("数组参数传递 likes ==>" + Arrays.toString(likes));
+    return "{'module':'array param'}";
+}
+```
+
+
+
+![调试工具发送arrayParam请求](./images/调试工具发送arrayParam请求.png)
+
+查看控制台打印结果
+
+![arrayParam请求控制台打印结果](./images/arrayParam请求控制台打印结果.png)
+
+
+
+##### 集合类型参数
+
+同理，我们定义一个方法，将集合作为形参，并尝试发送请求
+
+```java
+@RequestMapping("/listParam")
+@ResponseBody
+public String listParam(List<String> likes) {
+    System.out.println("集合参数传递 user ==>" + likes);
+    return "{'module':'list param'}";
+}
+```
+
+请求方式同上，注意需要把请求url中的arrayParam替换为listParam
+
+查看控制台会发现报错
+
+![listParam请求控制台答应结果](./images/listParam请求控制台答应结果.png)
+
+从报错信息中，可以看出`listParam`方法在尝试通过构造函数创建List对象实例，并将请求中的参数值作为属性值（同List.size）赋给List对象实例，但是我们需要的是将传参作为集合的值传给List对象，<span style="color:red;">对此，我们可以使用@RequestParam注解来解决这个问题</span>
+
+```java
+@RequestMapping("/listParam")
+@ResponseBody
+public String listParam(@RequestParam List<String> likes) {
+    System.out.println("集合参数传递 user ==>" + likes);
+    return "{'module':'list param'}";
+}
+```
+
+重新启动项目，并发送请求，查看控制台打印
+
+![listParam请求控制台答应结果2](./images/listParam请求控制台答应结果2.png)
+
+
+
+#### JSON数据传递参数
+
+JSON数据主要分为以下三类：
+
+- json数组
+- json对象（POJO）
+- json对象数组（POJO）
+
+
+
+<span style="color:red;">要想接收JSON参数并进行相关的操作，首先需要导入相关的依赖</span>
+
+```xml
+<!--处理JSON-->
+<dependency>
+    <groupId>com.fasterxml.jackson.core</groupId>
+    <artifactId>jackson-databind</artifactId>
+    <version>2.10.0</version>
+</dependency>
+```
+
+并在`SpringMvcConfig`中添加`@EnableWebMvc`注解
+
+```java
+package com.stone.config;
+
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.config.annotation.EnableWebMvc;
+
+@Configuration
+@ComponentScan(basePackages = "com.stone.controller")
+@EnableWebMvc // 通过这个注解可以开启JSON格式数据的支持
+public class SpringMvcConfig {
+}
+```
+
+然后在Controller中定义请求处理方法（<span style="color:red;">加在形参前的 @RequestBody 注解表示将 HTTP 请求体中的内容绑定到方法参数上</span>）
+
+```java
+// 集合参数：json格式
+@RequestMapping("/listParamForJson")
+@ResponseBody
+public String listParamForJson(@RequestBody List<String> likes) {
+    System.out.println("list common(json)参数传递 list ==>" + likes);
+    return "{'module':'list common for json param'}";
+}
+
+// POJO参数：json格式
+@RequestMapping("/pojoParamForJson")
+@ResponseBody
+public String pojoParamForJson(@RequestBody User user) {
+    System.out.println("pojo(json)参数传递 user ==>" + user);
+    return "{'module':'pojo for json param'}";
+}
+
+// 集合POJO参数：json格式
+@RequestMapping("/listPojoParamForJson")
+@ResponseBody
+public String listPojoParamForJson(@RequestBody List<User> userList) {
+    System.out.println("list pojo(json)参数传递 userList ==>" + userList);
+    return "{'module':'list pojo for json param'}";
+}
+```
+
+接着启动项目并发送请求
+
+![调试工具发送listParamForJson请求](./images/调试工具发送listParamForJson请求.png)
+
+查看控制台打印结果
+
+![listParamForJson请求控制台打印结果](./images/listParamForJson请求控制台打印结果.png)
+
+
+
+另外两个请求同理，只需要将请求路径和json数据内容进行替换即可
+
+![调试工具发送pojoParamForJson请求](./images/调试工具发送pojoParamForJson请求.png)
+
+---
+
+![调试工具发送listPojoParamForJson请求](./images/调试工具发送listPojoParamForJson请求.png)
+
+控制台打印结果如下
+
+![pojoParamForJson请求和listPojoParamForJson请求控制台打印结果](./images/pojoParamForJson请求和listPojoParamForJson请求控制台打印结果.png)
+
+
+
+#### 日期类型参数传递
+
+日期类型的数据格式有多种多样的，其中最常见的几种有：
+
+- 2088-08-18
+- 2088/08/18
+- 08/18/2088
+
+
+
+我们在Controller中定义一个方法用来接收日期类型参数
+
+```java
+@RequestMapping("/dateParam")
+@ResponseBody
+public String dateParam(Date date) {
+    System.out.println("日期参数传递 date ==>" + date);
+    return "{'module':'date param'}";
+}
+```
+
+https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=52
