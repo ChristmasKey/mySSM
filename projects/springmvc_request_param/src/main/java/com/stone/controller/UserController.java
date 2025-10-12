@@ -1,6 +1,7 @@
 package com.stone.controller;
 
 import com.stone.domain.User;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -88,7 +89,7 @@ public class UserController {
     // 日期参数
     @RequestMapping("/dateParam")
     @ResponseBody
-    public String dateParam(Date date) {
+    public String dateParam(@DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date date) {
         System.out.println("日期参数传递 date ==>" + date);
         return "{'module':'date param'}";
     }

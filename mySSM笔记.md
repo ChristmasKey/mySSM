@@ -7729,4 +7729,33 @@ public String dateParam(Date date) {
 }
 ```
 
-https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=52
+然后启动项目，并尝试用不同格式的日期参数来发送请求
+
+![调试工具发送dateParam请求](./images/调试工具发送dateParam请求.png)
+
+查看控制台打印结果可知，第一种格式的日期参数的请求能够成功，而第二种格式的日期参数的请求则报错了
+
+![dateParam请求控制台打印结果](./images/dateParam请求控制台打印结果.png)
+
+<span style="color:blue;">这是因为Spring默认将第一种格式作为日期类型参数的转换格式，因此我们需要为其他几种格式的日期参数指定转换格式：</span>
+
+<span style="color:red;">通过`@DateTimeFormat`注解可以为日期类型的参数指定转换格式</span>
+
+```java
+@RequestMapping("/dateParam")
+@ResponseBody
+public String dateParam(@DateTimeFormat(pattern = "yyyy-MM-dd") Date date) {
+    System.out.println("日期参数传递 date ==>" + date);
+    return "{'module':'date param'}";
+}
+```
+
+重新启动项目并发送请求，会看到请求成功（控制台截图略）
+
+<span style="color:red;">同理，对于其他格式的日期类型参数，只需要修改**pattern**的值即可</span>
+
+
+
+#### 响应
+
+https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=53
