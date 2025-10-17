@@ -7758,4 +7758,13 @@ public String dateParam(@DateTimeFormat(pattern = "yyyy-MM-dd") Date date) {
 
 #### 响应
 
-https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=53
+响应主要有
+
+- 响应页面
+- 响应数据
+    - 文本数据
+    - json数据
+
+
+
+https://www.bilibili.com/video/BV1Fi4y1S7ix/?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=53
