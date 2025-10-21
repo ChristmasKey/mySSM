@@ -7767,4 +7767,182 @@ public String dateParam(@DateTimeFormat(pattern = "yyyy-MM-dd") Date date) {
 
 
 
-https://www.bilibili.com/video/BV1Fi4y1S7ix/?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=53
+创建一个新的项目工程`springmvc_response`
+
+![springmvc_response](./images/springmvc_response.png)
+
+项目代码基本内容如下：
+
+`pom.xml`
+
+```xml
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.stone</groupId>
+  <artifactId>springmvc_response</artifactId>
+  <version>1.0-SNAPSHOT</version>
+
+  <packaging>war</packaging>
+
+  <name>springmvc_response</name>
+
+  <dependencies>
+      <dependency>
+          <groupId>org.springframework</groupId>
+          <artifactId>spring-webmvc</artifactId>
+          <version>5.2.15.RELEASE</version>
+      </dependency>
+      <dependency>
+          <groupId>javax.servlet</groupId>
+          <artifactId>javax.servlet-api</artifactId>
+          <version>3.1.0</version>
+      </dependency>
+      <!--处理JSON-->
+      <dependency>
+          <groupId>com.fasterxml.jackson.core</groupId>
+          <artifactId>jackson-databind</artifactId>
+          <version>2.10.0</version>
+      </dependency>
+  </dependencies>
+  <build>
+    <plugins>
+      <!--Tomcat插件-->
+      <plugin>
+        <groupId>org.apache.tomcat.maven</groupId>
+        <artifactId>tomcat7-maven-plugin</artifactId>
+        <version>2.2</version>
+        <configuration>
+          <port>8090</port>
+          <path>/</path>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>
+```
+
+`SpringMvcConfig`
+
+```java
+package com.stone.config;
+
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+@ComponentScan(basePackages = "com.stone.controller")
+public class SpringMvcConfig {
+}
+```
+
+`ServletContainersInitConfig`
+
+```java
+package com.stone.config;
+
+import org.springframework.web.servlet.support.AbstractAnnotationConfigDispatcherServletInitializer;
+
+public class ServletContainersInitConfig extends AbstractAnnotationConfigDispatcherServletInitializer {
+    protected Class<?>[] getRootConfigClasses() {
+        return new Class[0];
+    }
+
+    protected Class<?>[] getServletConfigClasses() {
+        return new Class[]{SpringMvcConfig.class};
+    }
+
+    protected String[] getServletMappings() {
+        return new String[]{"/"};
+    }
+}
+```
+
+`page.jsp`
+
+![page.jsp目录位置](./images/page.jsp目录位置.png)
+
+```jsp
+<html>
+<body>
+<h2>Hello World!</h2>
+</body>
+</html>
+```
+
+
+
+然后我们新建一个Controller来测试一下几种响应类型
+
+`UserController`
+
+```java
+package com.stone.controller;
+
+import com.stone.domain.User;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+@Controller
+public class UserController {
+
+    @RequestMapping("/toJumpPage")
+    public String toJumpPage() {
+        System.out.println("跳转页面");
+        return "page.jsp";
+    }
+}
+```
+
+启动项目，并在**浏览器**中访问url http://localhost:8080/springmvc_response/toJumpPage
+
+![浏览器访问toJumpPage](./images/浏览器访问toJumpPage.png)
+
+
+
+同理，我们再测试一下其他响应类型
+
+```java
+package com.stone.controller;
+
+import com.stone.domain.User;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+@Controller
+public class UserController {
+
+    // 响应页面/跳转页面
+    @RequestMapping("/toJumpPage")
+    public String toJumpPage() {
+        System.out.println("跳转页面");
+        return "page.jsp";
+    }
+
+    // 响应文本数据
+    @RequestMapping("/toText")
+    @ResponseBody
+    public String toText() {
+        System.out.println("返回纯文本数据");
+        return "hello,stone";
+    }
+
+    // 响应json数据
+    @RequestMapping("/toJsonPOJO")
+    @ResponseBody
+    public User toJsonPOJO() {
+        System.out.println("返回json对象数据");
+        User user = new User();
+        user.setName("stone");
+        user.setAge(18);
+        return user;
+    }
+}
+```
+
+![调试工具发送toText请求](./images/调试工具发送toText请求.png)
+
+
+

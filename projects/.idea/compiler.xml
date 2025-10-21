@@ -25,6 +25,7 @@
         <module name="annotation_di" />
         <module name="aop_demo" />
         <module name="di_set" />
+        <module name="springmvc_response" />
         <module name="bean_lifecycle" />
         <module name="bean_instance" />
         <module name="springmvc_demo" />
