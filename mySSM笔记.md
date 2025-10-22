@@ -7833,6 +7833,7 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 @ComponentScan(basePackages = "com.stone.controller")
+@EnableWebMvc
 public class SpringMvcConfig {
 }
 ```
@@ -7901,7 +7902,7 @@ public class UserController {
 
 
 
-同理，我们再测试一下其他响应类型
+同理，我们再测试一下其他响应类型（<span style="color:red;">注意：我们在其他方法上加上了@ResponseBody注解！！</span>）
 
 ```java
 package com.stone.controller;
@@ -7939,10 +7940,58 @@ public class UserController {
         user.setAge(18);
         return user;
     }
+
+    // 响应json集合数据
+    @RequestMapping("/toJsonList")
+    @ResponseBody
+    public List<User> toJsonList() {
+        System.out.println("返回json集合数据");
+        List<User> users = new ArrayList<User>();
+        User user1 = new User();
+        user1.setName("stone1");
+        user1.setAge(18);
+        users.add(user1);
+        User user2 = new User();
+        user2.setName("stone2");
+        user2.setAge(19);
+        users.add(user2);
+        return users;
+    }
 }
 ```
 
 ![调试工具发送toText请求](./images/调试工具发送toText请求.png)
 
+---
+
+![调试工具发送toJsonPOJO请求](./images/调试工具发送toJsonPOJO请求.png)
+
+---
+
+![调试工具发送toJsonList请求](./images/调试工具发送toJsonList请求.png)
 
 
+
+##### 关于@ResponseBody注解
+
+![关于@ResponseBody注解](./images/关于@ResponseBody注解.png)
+
+<span style="color:red;">@ResponseBody注解在Spring中对应的处理器类为`HttpMessageConverter`，而将响应内容转为Json的类为`MappingJackson2HttpMessageConverter`</span>
+
+![HttpMessageConverter类层级结构](./images/HttpMessageConverter类层级结构.png)
+
+
+
+### REST风格
+
+![REST风格简介](./images/REST风格简介.png)
+
+创建一个新的项目工程`springmvc_rest`
+
+
+
+项目代码基本内容如下：
+
+
+
+https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=54

@@ -5,6 +5,9 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Controller
 public class UserController {
 
@@ -32,5 +35,22 @@ public class UserController {
         user.setName("stone");
         user.setAge(18);
         return user;
+    }
+
+    // 响应json集合数据
+    @RequestMapping("/toJsonList")
+    @ResponseBody
+    public List<User> toJsonList() {
+        System.out.println("返回json集合数据");
+        List<User> users = new ArrayList<User>();
+        User user1 = new User();
+        user1.setName("stone1");
+        user1.setAge(18);
+        users.add(user1);
+        User user2 = new User();
+        user2.setName("stone2");
+        user2.setAge(19);
+        users.add(user2);
+        return users;
     }
 }
