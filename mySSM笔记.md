@@ -7988,10 +7988,289 @@ public class UserController {
 
 创建一个新的项目工程`springmvc_rest`
 
-
+![springmvc_rest](./images/springmvc_rest.png)
 
 项目代码基本内容如下：
 
+`pom.xml`
+
+```xml
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.stone</groupId>
+  <artifactId>springmvc_rest</artifactId>
+  <version>1.0-SNAPSHOT</version>
+
+  <packaging>war</packaging>
+
+  <name>springmvc_rest</name>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-webmvc</artifactId>
+      <version>5.2.15.RELEASE</version>
+    </dependency>
+    <dependency>
+      <groupId>javax.servlet</groupId>
+      <artifactId>javax.servlet-api</artifactId>
+      <version>3.1.0</version>
+    </dependency>
+    <!--处理JSON-->
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+      <version>2.10.0</version>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <!--Tomcat插件-->
+      <plugin>
+        <groupId>org.apache.tomcat.maven</groupId>
+        <artifactId>tomcat7-maven-plugin</artifactId>
+        <version>2.2</version>
+        <configuration>
+          <port>8090</port>
+          <path>/</path>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>
+```
+
+`ServletContainersInitConfig`和`SpringMvcConfig`配置类同上
+
+`User`类同上
+
+`UserController`
+
+```java
+package com.stone.controller;
+
+import com.stone.domain.User;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+@Controller
+public class UserController {
+
+    @RequestMapping("/save")
+    @ResponseBody
+    public String save(@RequestBody User user) {
+        System.out.println("user save..." + user);
+        return "{'module':'user save'}";
+    }
+
+    @RequestMapping("/delete")
+    @ResponseBody
+    public String delete(Integer id) {
+        System.out.println("user delete..." + id);
+        return "{'module':'user delete'}";
+    }
+
+    @RequestMapping("/update")
+    @ResponseBody
+    public String update(@RequestBody User user) {
+        System.out.println("user update..." + user);
+        return "{'module':'user update'}";
+    }
+
+    @RequestMapping("/getById")
+    @ResponseBody
+    public String getById(Integer id) {
+        System.out.println("user getById..." + id);
+        return "{'module':'user getById'}";
+    }
+
+    @RequestMapping("/getAll")
+    @ResponseBody
+    public String getAll() {
+        System.out.println("user getAll...");
+        return "{'module':'user getAll'}";
+    }
+}
+```
+
+<span style="color:red;">上面的Controller中是传统的写法，现在我们要将其改为REST风格的写法</span>
+
+```java
+package com.stone.controller;
+
+import com.stone.domain.User;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.*;
+
+@Controller
+public class UserController {
+
+    @RequestMapping(value = "/users", method = RequestMethod.POST)
+    @ResponseBody
+    public String save(@RequestBody User user) {
+        System.out.println("user save..." + user);
+        return "{'module':'user save'}";
+    }
+
+    @RequestMapping(value = "/users/{id}", method = RequestMethod.DELETE)
+    @ResponseBody
+    public String delete(@PathVariable("id") Integer id) {
+        System.out.println("user delete..." + id);
+        return "{'module':'user delete'}";
+    }
+
+    @RequestMapping(value = "/users", method = RequestMethod.PUT)
+    @ResponseBody
+    public String update(@RequestBody User user) {
+        System.out.println("user update..." + user);
+        return "{'module':'user update'}";
+    }
+
+    @RequestMapping(value = "/users/{id}", method = RequestMethod.GET)
+    @ResponseBody
+    public String getById(@PathVariable("id") Integer id) {
+        System.out.println("user getById..." + id);
+        return "{'module':'user getById'}";
+    }
+
+    @RequestMapping(value = "/users", method = RequestMethod.GET)
+    @ResponseBody
+    public String getAll() {
+        System.out.println("user getAll...");
+        return "{'module':'user getAll'}";
+    }
+}
+```
+
+在上面我们用到了如下注解：
+
+**@RequestMapping注解**
+
+![@RequestMapping注解](./images/@RequestMapping注解.png)
+
+**@PathVariable注解**
+
+![@PathVariable注解](./images/@PathVariable注解.png)
+
+<span style="color:blue;">关于@RequestBody、@RequestParam和@PathVariable注解</span>
+
+![SpringMVC关于请求参数的三个注解](./images/SpringMVC关于请求参数的三个注解.png)
 
 
-https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=54
+
+#### 简化开发
+
+对于上面REST风格的写法，我们还可以进一步将其简化，为此我们新建一个Controller
+
+`BookController`
+
+```java
+package com.stone.controller;
+
+import com.stone.domain.Book;
+import org.springframework.web.bind.annotation.*;
+
+@RestController // 综合了@Controller和@ResponseBody注解的功能
+@RequestMapping("/books")
+public class BookController {
+
+    @PostMapping
+    public String save(@RequestBody Book book) {
+        System.out.println("book save..." + book);
+        return "{'module':'book save'}";
+    }
+
+    @DeleteMapping("/{id}")
+    public String delete(@PathVariable("id") Integer id) {
+        System.out.println("book delete..." + id);
+        return "{'module':'book delete'}";
+    }
+
+    @PutMapping
+    public String update(@RequestBody Book book) {
+        System.out.println("book update..." + book);
+        return "{'module':'book update'}";
+    }
+
+    @GetMapping("/{id}")
+    public String getById(@PathVariable("id") Integer id) {
+        System.out.println("book getById..." + id);
+        return "{'module':'book getById'}";
+    }
+
+    @GetMapping
+    public String getAll() {
+        System.out.println("book getAll...");
+        return "{'module':'book getAll'}";
+    }
+}
+```
+
+`Book`
+
+```java
+package com.stone.domain;
+
+public class Book {
+    private String name;
+    private Double price;
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public Double getPrice() {
+        return price;
+    }
+
+    public void setPrice(Double price) {
+        this.price = price;
+    }
+
+    @Override
+    public String toString() {
+        return "Book{" +
+                "name='" + name + '\'' +
+                ", price=" + price +
+                '}';
+    }
+}
+```
+
+在上面我们用到了如下注解：
+
+**@RestController注解**
+
+![@RestController注解](./images/@RestController注解.png)
+
+<span style="color:blue;">关于@GetMapping、@PostMapping、@PutMapping和@DeleteMapping注解</span>
+
+![SpringMVC关于请求类型的四个注解](./images/SpringMVC关于请求类型的四个注解.png)
+
+
+
+#### 案例：页面数据交互
+
+基于RESTful的页面数据交互案例
+
+创建一个新的项目工程`springmvc_rest_case`
+
+![springmvc_rest_case](./images/springmvc_rest_case.png)
+
+项目代码基本内容如下：
+
+pom.xml
+
+```xml
+```
+
+https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=57

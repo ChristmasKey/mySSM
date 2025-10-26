@@ -55,5 +55,9 @@
     <file url="file://$PROJECT_DIR$/springmvc_request_param/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/springmvc_response/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/springmvc_response/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/springmvc_rest/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/springmvc_rest/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/springmvc_rest_case/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/springmvc_rest_case/src/main/resources" charset="UTF-8" />
   </component>
 </project>
