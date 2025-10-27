@@ -1,6 +1,9 @@
 package com.stone.config;
 
+import org.springframework.web.filter.CharacterEncodingFilter;
 import org.springframework.web.servlet.support.AbstractAnnotationConfigDispatcherServletInitializer;
+
+import javax.servlet.Filter;
 
 public class ServletContainersInitConfig extends AbstractAnnotationConfigDispatcherServletInitializer {
     @Override
@@ -16,5 +19,13 @@ public class ServletContainersInitConfig extends AbstractAnnotationConfigDispatc
     @Override
     protected String[] getServletMappings() {
         return new String[]{"/"};
+    }
+
+    // 设置过滤器处理POST请求中文传参乱码问题
+    @Override
+    protected Filter[] getServletFilters() {
+        CharacterEncodingFilter characterEncodingFilter = new CharacterEncodingFilter();
+        characterEncodingFilter.setEncoding("UTF-8");
+        return new Filter[]{characterEncodingFilter};
     }
 }

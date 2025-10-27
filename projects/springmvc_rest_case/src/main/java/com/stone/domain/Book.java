@@ -2,8 +2,9 @@ package com.stone.domain;
 
 public class Book {
     private Integer id;
+    private String type;
     private String name;
-    private Double price;
+    private String description;
 
     public Integer getId() {
         return id;
@@ -11,6 +12,14 @@ public class Book {
 
     public void setId(Integer id) {
         this.id = id;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
     }
 
     public String getName() {
@@ -21,20 +30,21 @@ public class Book {
         this.name = name;
     }
 
-    public Double getPrice() {
-        return price;
+    public String getDescription() {
+        return description;
     }
 
-    public void setPrice(Double price) {
-        this.price = price;
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     @Override
     public String toString() {
         return "Book{" +
                 "id=" + id +
+                ", type='" + type + '\'' +
                 ", name='" + name + '\'' +
-                ", price=" + price +
+                ", description='" + description + '\'' +
                 '}';
     }
 }
