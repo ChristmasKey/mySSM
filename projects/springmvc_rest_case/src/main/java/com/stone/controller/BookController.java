@@ -18,6 +18,7 @@ public class BookController {
 
     @GetMapping
     public List<Book> getAll() {
+        System.out.println("book getAll is running...");
         Book book1 = new Book();
         book1.setId(1);
         book1.setType("TYPE");
