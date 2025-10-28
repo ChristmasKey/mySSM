@@ -29,6 +29,7 @@
         <module name="springmvc_response" />
         <module name="bean_lifecycle" />
         <module name="bean_instance" />
+        <module name="springmvc_ssm" />
         <module name="springmvc_rest" />
         <module name="springmvc_demo" />
         <module name="spring_mybatis" />

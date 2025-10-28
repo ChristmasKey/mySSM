@@ -29,7 +29,7 @@ public class BookController {
         book2.setType("TYPE");
         book2.setName("python");
         book2.setDescription("nice book");
-        List<Book> books = new ArrayList<Book>();
+        List<Book> books = new ArrayList<>();
         books.add(book1);
         books.add(book2);
         return books;
