@@ -8518,6 +8518,8 @@ public class SpringMvcConfig {
 > - controller
 >     - 表现层接口测试（接口调试工具）
 
+### 创建工程
+
 创建新的项目工程`springmvc_ssm`
 
 ![springmvc_ssm](./images/springmvc_ssm.png)
@@ -8548,13 +8550,13 @@ public class SpringMvcConfig {
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-jdbc</artifactId>
-            <version>5.3.27</version>
+            <version>5.2.12.RELEASE</version>
         </dependency>
         <!--Spring整合JUnit-->
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-test</artifactId>
-            <version>5.3.16</version>
+            <version>5.2.12.RELEASE</version>
         </dependency>
         <!--MyBatis-->
         <dependency>
@@ -8584,7 +8586,7 @@ public class SpringMvcConfig {
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.13.2</version>
+            <version>4.12</version>
             <scope>test</scope>
         </dependency>
         <!--Servlet API-->
@@ -8622,11 +8624,451 @@ public class SpringMvcConfig {
 
 ![SSM项目工程的包层次结构](./images/SSM项目工程的包层次结构.png)
 
+### 框架整合
+
 创建各项配置类
+
+`jdbc.properties`
+
+```properties
+jdbc.driver=com.mysql.cj.jdbc.Driver
+jdbc.url=jdbc:mysql://localhost:3306/ssm_db?serverTimezone=Asia/Shanghai
+jdbc.username=root
+jdbc.password=1234
+```
+
+数据库表结构
+
+```sql
+CREATE TABLE `tbl_book` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `type` varchar(20) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `name` varchar(50) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `description` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+```
+
+`JdbcConfig`
+
+```java
+package com.stone.config;
+
+import com.alibaba.druid.pool.DruidDataSource;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+
+import javax.sql.DataSource;
+
+public class JdbcConfig {
+
+    @Value("${jdbc.driver}")
+    private String driver;
+    @Value("${jdbc.url}")
+    private String url;
+    @Value("${jdbc.username}")
+    private String username;
+    @Value("${jdbc.password}")
+    private String password;
+
+    @Bean
+    public DataSource dataSource() {
+        DruidDataSource dataSource = new DruidDataSource();
+        dataSource.setDriverClassName(driver);
+        dataSource.setUrl(url);
+        dataSource.setUsername(username);
+        dataSource.setPassword(password);
+        return dataSource;
+    }
+}
+```
+
+`MybatisConfig`
+
+```java
+package com.stone.config;
+
+import org.mybatis.spring.SqlSessionFactoryBean;
+import org.mybatis.spring.mapper.MapperScannerConfigurer;
+import org.springframework.context.annotation.Bean;
+
+import javax.sql.DataSource;
+
+public class MybatisConfig {
+
+    @Bean
+    public SqlSessionFactoryBean sqlSessionFactory(DataSource dataSource) {
+        SqlSessionFactoryBean sqlSessionFactoryBean = new SqlSessionFactoryBean();
+        sqlSessionFactoryBean.setDataSource(dataSource);
+        sqlSessionFactoryBean.setTypeAliasesPackage("com.stone.domain");
+        return sqlSessionFactoryBean;
+    }
+
+    @Bean
+    public MapperScannerConfigurer mapperScannerConfigurer() {
+        MapperScannerConfigurer mapperScannerConfigurer = new MapperScannerConfigurer();
+        mapperScannerConfigurer.setBasePackage("com.stone.dao");
+        return mapperScannerConfigurer;
+    }
+}
+```
 
 `SpringConfig`
 
 ```java
+package com.stone.config;
+
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.PropertySource;
+
+@Configuration
+@ComponentScan(basePackages = "com.stone.service")
+@PropertySource("classpath:jdbc.properties")
+@Import({JdbcConfig.class, MybatisConfig.class})
+public class SpringConfig {
+}
 ```
 
-https://www.bilibili.com/video/BV1Fi4y1S7ix/?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=59
+`SpringMvcConfig`
+
+```java
+package com.stone.config;
+
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.config.annotation.EnableWebMvc;
+
+@Configuration
+@ComponentScan(basePackages = {"com.stone.controller"})
+@EnableWebMvc
+public class SpringMvcConfig {
+}
+```
+
+`ServletContainersInitConfig`
+
+```java
+package com.stone.config;
+
+import org.springframework.web.filter.CharacterEncodingFilter;
+import org.springframework.web.servlet.support.AbstractAnnotationConfigDispatcherServletInitializer;
+
+import javax.servlet.Filter;
+
+public class ServletContainersInitConfig extends AbstractAnnotationConfigDispatcherServletInitializer {
+    @Override
+    protected Class<?>[] getRootConfigClasses() {
+        return new Class[]{SpringConfig.class};
+    }
+
+    @Override
+    protected Class<?>[] getServletConfigClasses() {
+        return new Class[]{SpringMvcConfig.class};
+    }
+
+    @Override
+    protected String[] getServletMappings() {
+        return new String[]{"/"};
+    }
+
+    // 设置过滤器处理POST请求中文传参乱码问题
+    @Override
+    protected Filter[] getServletFilters() {
+        return new Filter[]{new CharacterEncodingFilter("UTF-8", true)};
+    }
+}
+```
+
+<span style="color:red;">注意：该配置类中通过不同的方法分别读取SpringConfig类和SpringMvcConfig类，创建对应的Spring容器和SpringMVC容器，以此来分别装载两个Config类中注册的Bean，这里就引出了“**父子容器**”的概念，即SpringMVC容器可以访问父容器Spring容器中的Bean，但Spring容器无法访问子容器SpringMVC容器中的Bean。</span>
+
+<span style="color:blue;">如果想让Spring容器能够访问到SpringMVC容器中的Bean，我们可以将SpringConfig类放在SpringMvcConfig类的加载方法中加载，从而让两个容器合二为一</span>
+
+### 功能开发
+
+分别创建POJO类、Dao层、Service层和Controller层，并对Service层使用JUnit进行测试，对Controller层使用接口调试工具进行测试
+
+`Book`
+
+```java
+package com.stone.domain;
+
+public class Book {
+
+    private Integer id;
+    private String type;
+    private String name;
+    private String description;
+
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    @Override
+    public String toString() {
+        return "Book{" +
+                "id=" + id +
+                ", type='" + type + '\'' +
+                ", name='" + name + '\'' +
+                ", description='" + description + '\'' +
+                '}';
+    }
+}
+```
+
+`BookDao`
+
+```java
+package com.stone.dao;
+
+import com.stone.domain.Book;
+import org.apache.ibatis.annotations.Delete;
+import org.apache.ibatis.annotations.Insert;
+import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
+
+import java.util.List;
+
+public interface BookDao {
+
+    @Insert("insert into tbl_book(type,name,description) values(#{type},#{name},#{description})")
+    public void save(Book book);
+
+    @Update("update tbl_book set type = #{type}, name = #{name}, description = #{description} where id = #{id}")
+    public void update(Book book);
+
+    @Delete("delete from tbl_book where id=#{id}")
+    public void delete(Integer id);
+
+    @Select("select * from tbl_book where id = #{id}")
+    public Book getById(Integer id);
+
+    @Select("select * from tbl_book")
+    public List<Book> getAll();
+}
+```
+
+`BookService`
+
+```java
+package com.stone.service;
+
+import com.stone.domain.Book;
+
+import java.util.List;
+
+public interface BookService {
+
+    /**
+     * 添加图书
+     * @param book 图书信息
+     * @return 保存结果
+     */
+    public boolean addBook(Book book);
+
+    /**
+     * 删除图书
+     * @param id 图书id
+     * @return 删除结果
+     */
+    public boolean deleteBook(Integer id);
+
+    /**
+     * 修改图书
+     * @param book 图书信息
+     * @return 修改结果
+     */
+    public boolean updateBook(Book book);
+
+    /**
+     * 根据id查询图书
+     * @param id 图书id
+     * @return 图书信息
+     */
+    public Book getBookById(Integer id);
+
+    /**
+     * 查询所有图书
+     * @return 图书列表
+     */
+    public List<Book> getAllBooks();
+}
+```
+
+`BookServiceImpl`
+
+```java
+package com.stone.service.impl;
+
+import com.stone.dao.BookDao;
+import com.stone.domain.Book;
+import com.stone.service.BookService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+
+@Service
+public class BookServiceImpl implements BookService {
+
+    @Autowired
+    private BookDao bookDao;
+
+    @Override
+    public boolean addBook(Book book) {
+        bookDao.save(book);
+        return true;
+    }
+
+    @Override
+    public boolean deleteBook(Integer id) {
+        bookDao.delete(id);
+        return true;
+    }
+
+    @Override
+    public boolean updateBook(Book book) {
+        bookDao.update(book);
+        return true;
+    }
+
+    @Override
+    public Book getBookById(Integer id) {
+        return bookDao.getById(id);
+    }
+
+    @Override
+    public List<Book> getAllBooks() {
+        return bookDao.getAll();
+    }
+}
+```
+
+`BookController`
+
+```java
+package com.stone.controller;
+
+import com.stone.domain.Book;
+import com.stone.service.BookService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/books")
+public class BookController {
+
+    @Autowired
+    private BookService bookService;
+
+    @PostMapping
+    public boolean addBook(@RequestBody Book book) {
+        return bookService.addBook(book);
+    }
+
+    @DeleteMapping("/{id}")
+    public boolean deleteBook(@PathVariable("id") Integer id) {
+        return bookService.deleteBook(id);
+    }
+
+    @PutMapping
+    public boolean updateBook(@RequestBody Book book) {
+        return bookService.updateBook(book);
+    }
+
+    @GetMapping("/{id}")
+    public Book getBookById(@PathVariable("id") Integer id) {
+        return bookService.getBookById(id);
+    }
+
+    @GetMapping
+    public List<Book> getAllBooks() {
+        return bookService.getAllBooks();
+    }
+}
+```
+
+### 功能测试
+
+针对Service层的方法，使用JUnit进行测试，编写测试类
+
+`BookServiceTest`
+
+```java
+package com.stone.service;
+
+import com.stone.config.SpringConfig;
+import com.stone.domain.Book;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+
+@RunWith(SpringJUnit4ClassRunner.class)
+@ContextConfiguration(classes = SpringConfig.class)
+public class BookServiceTest {
+
+    @Autowired
+    private BookService bookService;
+
+    @Test
+    public void testGetById() {
+        Book book = bookService.getBookById(1);
+        System.out.println(book);
+    }
+
+    @Test
+    public void testGetAll() {
+        bookService.getAllBooks().forEach(System.out::println);
+    }
+
+}
+```
+
+测试方法执行结果如下
+
+![Service层方法单元测试结果1](./images/Service层方法单元测试结果1.png)
+
+---
+
+![Service层方法单元测试结果2](./images/Service层方法单元测试结果2.png)
+
+针对Controller层的方法，启动项目并使用接口调试工具进行测试
+
+![Controller层方法测试结果1](./images/Controller层方法测试结果1.png)
+
+### 添加事务
+
+https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=61
