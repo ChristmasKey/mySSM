@@ -9071,4 +9071,292 @@ public class BookServiceTest {
 
 ### 添加事务
 
-https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=61
+开启注解式事务驱动
+
+```java
+package com.stone.config;
+
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.PropertySource;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
+
+@Configuration
+@ComponentScan(basePackages = "com.stone.service")
+@PropertySource("classpath:jdbc.properties")
+@Import({JdbcConfig.class, MybatisConfig.class})
+@EnableTransactionManagement // 开启注解式事务驱动
+public class SpringConfig {
+}
+```
+
+配置事务管理器
+
+```java
+package com.stone.config;
+
+import com.alibaba.druid.pool.DruidDataSource;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.transaction.PlatformTransactionManager;
+
+import javax.sql.DataSource;
+
+public class JdbcConfig {
+
+    @Value("${jdbc.driver}")
+    private String driver;
+    @Value("${jdbc.url}")
+    private String url;
+    @Value("${jdbc.username}")
+    private String username;
+    @Value("${jdbc.password}")
+    private String password;
+
+    @Bean
+    public DataSource dataSource() {
+        DruidDataSource dataSource = new DruidDataSource();
+        dataSource.setDriverClassName(driver);
+        dataSource.setUrl(url);
+        dataSource.setUsername(username);
+        dataSource.setPassword(password);
+        return dataSource;
+    }
+
+    // 配置事务管理器
+    @Bean
+    public PlatformTransactionManager transactionManager(DataSource dataSource) {
+        DataSourceTransactionManager ds = new DataSourceTransactionManager();
+        ds.setDataSource(dataSource);
+        return ds;
+    }
+}
+```
+
+在业务中使用@Transactional注解
+
+```java
+package com.stone.service;
+
+import com.stone.domain.Book;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+
+@Transactional
+public interface BookService {
+    ...
+}
+```
+
+### 数据格式封装
+
+将所有接口的返回值数据格式进行统一规范化的封装：
+
+![表现层数据封装](./images/表现层数据封装.png)
+
+`Result`
+
+```java
+package com.stone.controller;
+
+public class Result {
+    private Object data;
+    private String msg;
+    private Integer code;
+
+    public Result() {
+    }
+
+    public Result(Object data, Integer code) {
+        this.data = data;
+        this.code = code;
+    }
+
+    public Result(Object data, String msg, Integer code) {
+        this.data = data;
+        this.msg = msg;
+        this.code = code;
+    }
+
+    public Object getData() {
+        return data;
+    }
+
+    public void setData(Object data) {
+        this.data = data;
+    }
+
+    public String getMsg() {
+        return msg;
+    }
+
+    public void setMsg(String msg) {
+        this.msg = msg;
+    }
+
+    public Integer getCode() {
+        return code;
+    }
+
+    public void setCode(Integer code) {
+        this.code = code;
+    }
+
+    @Override
+    public String toString() {
+        return "Result{" +
+                "data=" + data +
+                ", msg='" + msg + '\'' +
+                ", code=" + code +
+                '}';
+    }
+}
+```
+
+`Code`
+
+```java
+package com.stone.controller;
+
+public class Code {
+    public static final Integer SAVE_OK = 20011;
+    public static final Integer DELETE_OK = 20021;
+    public static final Integer UPDATE_OK = 20031;
+    public static final Integer GET_OK = 20041;
+
+    public static final Integer SAVE_ERR = 20010;
+    public static final Integer DELETE_ERR = 20020;
+    public static final Integer UPDATE_ERR = 20030;
+    public static final Integer GET_ERR = 20040;
+}
+```
+
+`BookController`
+
+```java
+package com.stone.controller;
+
+import com.stone.domain.Book;
+import com.stone.service.BookService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/books")
+public class BookController {
+
+    @Autowired
+    private BookService bookService;
+
+    @PostMapping
+    public Result addBook(@RequestBody Book book) {
+        boolean flag = bookService.addBook(book);
+        return new Result(flag, flag ? Code.SAVE_OK : Code.SAVE_ERR);
+    }
+
+    @DeleteMapping("/{id}")
+    public Result deleteBook(@PathVariable("id") Integer id) {
+        boolean flag = bookService.deleteBook(id);
+        return new Result(flag, flag ? Code.DELETE_OK : Code.DELETE_ERR);
+    }
+
+    @PutMapping
+    public Result updateBook(@RequestBody Book book) {
+        boolean flag = bookService.updateBook(book);
+        return new Result(flag, flag ? Code.UPDATE_OK : Code.UPDATE_ERR);
+    }
+
+    @GetMapping("/{id}")
+    public Result getBookById(@PathVariable("id") Integer id) {
+        Book book = bookService.getBookById(id);
+        if (book != null) {
+            return new Result(book, "数据查询成功", Code.GET_OK);
+        } else {
+            return new Result(null, "数据查询失败，请重试！", Code.GET_ERR);
+        }
+    }
+
+    @GetMapping
+    public Result getAllBooks() {
+        List<Book> bookList = bookService.getAllBooks();
+        if (bookList != null) {
+            return new Result(bookList, "数据查询成功", Code.GET_OK);
+        } else {
+            return new Result(null, "数据查询失败，请重试！", Code.GET_ERR);
+        }
+    }
+}
+```
+
+### 异常处理器
+
+![常见异常现象](./images/常见异常现象.png)
+
+<b style="color:red;">各个层级均可能出现异常，所有的异常均抛出到表现层进行处理，并且可以利用AOP思想对所有异常处理进行统一</b>
+
+<span style="color:blue;">SpringMVC提供的异常处理器可以集中、统一的处理项目中出现的异常</span>
+
+`ProjectExceptionAdvice`
+
+```java
+package com.stone.controller;
+
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+@RestControllerAdvice // 将该类声明为异常处理器类
+public class ProjectExceptionAdvice {
+
+    @ExceptionHandler(Exception.class) // 定义要处理的异常类型
+    public Result doException(Exception e) {
+        System.out.println("捕获到异常：" + e.getMessage());
+        return new Result(null, e.getMessage(), 500);
+    }
+}
+```
+
+<span style="color:red;">在`SpringMvcConfig`中的扫描包路径中添加`ProjectExceptionAdvice`的包路径，否则异常处理器不会生效，这里我们将异常处理器放在了Controller的包路径下，所以不需要做额外的配置了。</span>
+
+我们尝试在Controller中的方法中添加异常
+
+```java
+@GetMapping("/{id}")
+public Result getBookById(@PathVariable("id") Integer id) {
+    int i = 1 / 0; // 模拟异常
+    Book book = bookService.getBookById(id);
+    if (book != null) {
+        return new Result(book, "数据查询成功", Code.GET_OK);
+    } else {
+        return new Result(null, "数据查询失败，请重试！", Code.GET_ERR);
+    }
+}
+```
+
+并发送请求调用它
+
+![发送请求验证异常处理器](./images/发送请求验证异常处理器.png)
+
+
+
+<b style="color:#0eb83a;">在我们定义异常处理器时，涉及到两个注解</b>
+
+`@RestControllerAdvice`
+
+![@RestControllerAdvice注解](./images/@RestControllerAdvice注解.png)
+
+`@ExceptionHandler`
+
+![@ExceptionHandler注解](./images/@ExceptionHandler注解.png)
+
+https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=65
+
+
+
+
+
+# END

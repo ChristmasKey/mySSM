@@ -1,9 +1,11 @@
 package com.stone.service;
 
 import com.stone.domain.Book;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+@Transactional
 public interface BookService {
 
     /**
