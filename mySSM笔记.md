@@ -9353,7 +9353,226 @@ public Result getBookById(@PathVariable("id") Integer id) {
 
 ![@ExceptionHandler注解](./images/@ExceptionHandler注解.png)
 
-https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=65
+#### 项目异常处理方案
+
+**项目异常分类**
+
+- 业务异常（BusinessException）
+    - 规范的用户行为产生的异常
+    - 不规范的用户行为操作产生的异常
+    - <span style="color:red;">处理方案</span>
+        - 发送对应消息传递给用户，提醒规范操作
+- 系统异常（SystemException）
+    - 项目运行过程中可预计且无法避免的异常
+    - <span style="color:red;">处理方案</span>
+        - 发送固定消息传递给用户，安抚用户
+        - 发送特定消息给运维人员，提醒维护
+        - 记录日志
+- 其他异常（Exception）
+    - 编程人员未预料到的异常
+    - <span style="color:red;">处理方案</span>
+        - 发送固定消息传递给用户，安抚用户
+        - 发送特定消息给编程人员，提醒维护（纳入预料范围内）
+        - 记录日志
+
+
+
+**创建自定义异常类**
+
+`SystemException`
+
+```java
+package com.stone.exception;
+
+public class SystemException extends RuntimeException{
+    // 定义异常码用于区分异常
+    private Integer code;
+
+    public Integer getCode() {
+        return code;
+    }
+
+    public void setCode(Integer code) {
+        this.code = code;
+    }
+
+    // 重写所有构造方法
+    public SystemException(Integer code) {
+        this.code = code;
+    }
+
+    public SystemException(String message, Integer code) {
+        super(message);
+        this.code = code;
+    }
+
+    public SystemException(String message, Throwable cause, Integer code) {
+        super(message, cause);
+        this.code = code;
+    }
+
+    public SystemException(Throwable cause, Integer code) {
+        super(cause);
+        this.code = code;
+    }
+
+    public SystemException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace, Integer code) {
+        super(message, cause, enableSuppression, writableStackTrace);
+        this.code = code;
+    }
+}
+```
+
+`BusinessException`
+
+```java
+package com.stone.exception;
+
+public class BusinessException extends RuntimeException{
+    // 定义异常码用于区分异常
+    private Integer code;
+
+    public Integer getCode() {
+        return code;
+    }
+
+    public void setCode(Integer code) {
+        this.code = code;
+    }
+
+    // 重写所有构造方法
+    public BusinessException(Integer code) {
+        this.code = code;
+    }
+
+    public BusinessException(String message, Integer code) {
+        super(message);
+        this.code = code;
+    }
+
+    public BusinessException(String message, Throwable cause, Integer code) {
+        super(message, cause);
+        this.code = code;
+    }
+
+    public BusinessException(Throwable cause, Integer code) {
+        super(cause);
+        this.code = code;
+    }
+
+    public BusinessException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace, Integer code) {
+        super(message, cause, enableSuppression, writableStackTrace);
+        this.code = code;
+    }
+}
+```
+
+**定义异常码**
+
+```java
+package com.stone.controller;
+
+public class Code {
+    ...
+
+    public static final Integer SYSTEM_ERR = 50001;
+    public static final Integer SYSTEM_TIMEOUT_ERR = 50002;
+    public static final Integer SYSTEM_UNKNOWN_ERR = 59999;
+    public static final Integer BUSINESS_ERR = 60001;
+}
+```
+
+**设置异常处理方法**
+
+```java
+package com.stone.controller;
+
+import com.stone.exception.BusinessException;
+import com.stone.exception.SystemException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+@RestControllerAdvice // 将该类声明为异常处理器类
+public class ProjectExceptionAdvice {
+
+    @ExceptionHandler(BusinessException.class)
+    public Result doBusinessException(BusinessException e) {
+        // 记录日志
+        // 发送消息给运维
+        // 发送邮件给开发人员，ex对象发送给开发人员
+        return new Result(null, e.getMessage(), e.getCode());
+    }
+
+    @ExceptionHandler(SystemException.class)
+    public Result doSystemException(SystemException e) {
+        return new Result(null, e.getMessage(), e.getCode());
+    }
+
+
+    @ExceptionHandler(Exception.class) // 定义要处理的异常类型
+    public Result doException(Exception e) {
+        // 记录日志
+        // 发送消息给运维
+        // 发送邮件给开发人员，ex对象发送给开发人员
+        return new Result(null, "系统繁忙，请稍后再试！", Code.SYSTEM_UNKNOWN_ERR);
+    }
+}
+```
+
+**在业务方法中模拟异常**
+
+```java
+package com.stone.service.impl;
+
+import com.stone.controller.Code;
+import com.stone.dao.BookDao;
+import com.stone.domain.Book;
+import com.stone.exception.BusinessException;
+import com.stone.exception.SystemException;
+import com.stone.service.BookService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+
+@Service
+public class BookServiceImpl implements BookService {
+
+    ...
+
+    @Override
+    public Book getBookById(Integer id) {
+        // 模拟抛出业务异常
+        if (id == 1) {
+            throw new BusinessException("请规范操作！", Code.BUSINESS_ERR);
+        }
+        // 将可能出现的异常进行包装，转换成自定义异常
+        try {
+            int i = 1 / 0;
+        } catch (Exception e) {
+            throw new SystemException("服务器访问超时，请重试！", e, Code.SYSTEM_TIMEOUT_ERR);
+        }
+        return bookDao.getById(id);
+    }
+
+    ...
+}
+```
+
+### 页面联调
+
+页面文件放在`webapp`下
+
+![ssm整合-页面静态资源](./images/ssm整合-页面静态资源.png)
+
+我们需要对这些静态资源做<span style="color:red;">放行处理</span>
+
+```java
+```
+
+
+
+https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=66
 
 
 
