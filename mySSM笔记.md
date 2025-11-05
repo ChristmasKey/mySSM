@@ -9568,11 +9568,43 @@ public class BookServiceImpl implements BookService {
 我们需要对这些静态资源做<span style="color:red;">放行处理</span>
 
 ```java
+package com.stone.config;
+
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurationSupport;
+
+@Configuration
+public class SpringMvcSupport extends WebMvcConfigurationSupport {
+    @Override
+    protected void addResourceHandlers(ResourceHandlerRegistry registry) {
+        registry.addResourceHandler("/pages/**").addResourceLocations("/pages/");
+        registry.addResourceHandler("/js/**").addResourceLocations("/js/");
+        registry.addResourceHandler("/css/**").addResourceLocations("/css/");
+        registry.addResourceHandler("/plugins/**").addResourceLocations("/plugins/");
+    }
+}
 ```
 
+`SpringMvcConfig`配置扫描包路径包括`SpringMvcSupport`类所在包
 
+```java
+package com.stone.config;
 
-https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=66
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.config.annotation.EnableWebMvc;
+
+@Configuration
+@ComponentScan(basePackages = {"com.stone.controller", "com.stone.config"})
+@EnableWebMvc
+public class SpringMvcConfig {
+}
+```
+
+然后在html页面中将业务接口接入
+
+https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=69
 
 
 
