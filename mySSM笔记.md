@@ -9608,7 +9608,74 @@ public class SpringMvcConfig {
 
 ## 拦截器
 
-https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=71
+### 概念
+
+**拦截器（Interceptor）**是一种动态拦截方法调用的机制，在SpringMVC中动态拦截控制器方法的执行。
+
+作用：
+
+- 在指定的方法调用前后执行预先设定的代码
+- 阻止原始方法的执行
+
+拦截器与过滤器的区别：
+
+- 归属不同：Filter属于Servlet技术，Interceptor属于SpringMVC技术
+- 拦截内容不同：Filter对所有访问进行增强，Interceptor仅针对SpringMVC的访问进行增强
+
+![拦截器概念](./images/拦截器概念.png)
+
+---
+
+> <span style="color:red;">过滤器与拦截器的区别：过滤器基于Servlet规范，通过函数回调实现，作用于所有Web请求；拦截器基于Spring框架，通过反射机制实现，专注于业务逻辑的拦截与增强。</span>
+>
+> **实现原理**：
+>
+> - 过滤器：实现`javax.servlet.Filter`接口，基于函数回调（如`doFilter()`方法），依赖Servlet容器（如Tomcat），仅适用于Web应用。‌‌
+> - 拦截器：实现`HandlerInterceptor`接口，基于反射和动态代理，由Spring容器管理，不依赖Servlet容器，可用于Web、Application或Swing程序。‌‌
+>
+> **拦截范围**：
+>
+> - 过滤器对所有进入容器的请求生效（包括静态资源）。
+> - 拦截器仅对Controller请求或特定路径生效，不处理静态资源。‌‌
+>
+> **触发时机**：
+>
+> - 过滤器在请求进入Servlet容器后、Servlet处理前执行预处理，在Servlet处理后执行后处理。‌‌
+> - 拦截器在请求进入Servlet后、Controller方法前执行`preHandle`，在Controller处理后、视图渲染前执行`postHandle`，在请求结束时执行`afterCompletion`。
+>
+> **功能定位**：
+>
+> - 过滤器用于通用预处理（如字符编码、权限验证、敏感词过滤）。
+> - 拦截器用于业务逻辑（如登录验证、日志记录、数据操作）。‌‌
+>
+> **执行顺序**：
+>
+> - 过滤器通过`@Order`注解控制（值越小优先级越高）。
+> - 拦截器通过注册顺序控制，`preHandle`按注册顺序执行，`postHandle`顺序相反。‌‌
+>
+> **资源注入**：
+>
+> - 过滤器无法注入Spring Bean，需手动初始化资源。‌‌
+> - 拦截器可直接注入Spring Bean（如Service）。
+
+---
+
+### 入门案例
+
+创建新的项目工程`springmvc_interceptor`
+
+![springmvc_interceptor](./images/springmvc_interceptor.png)
+
+项目代码基本内容如下：
+
+`pom.xml`
+
+```xml
+```
+
+https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=72
+
+
 
 
 
