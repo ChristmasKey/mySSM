@@ -8,11 +8,11 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurationSupp
 
 import javax.annotation.Resource;
 
-@Configuration
+// @Configuration
 public class SpringMvcSupport extends WebMvcConfigurationSupport {
 
     @Resource
-    private ProjectInterceptor projectInterceptor;
+    private ProjectInterceptor projectInterceptor; // 注入拦截器
 
     @Override
     protected void addResourceHandlers(ResourceHandlerRegistry registry) {
@@ -21,6 +21,6 @@ public class SpringMvcSupport extends WebMvcConfigurationSupport {
 
     @Override
     protected void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(projectInterceptor).addPathPatterns("/books");
+        registry.addInterceptor(projectInterceptor).addPathPatterns("/books", "/books/*");
     }
 }

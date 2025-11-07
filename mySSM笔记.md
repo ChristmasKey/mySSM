@@ -9873,7 +9873,7 @@ public class BookController {
 
 **接着我们需要去定义拦截器**
 
-为了方便包扫描，我们将拦截器定义为Controller层的子包
+为了方便包扫描，我们将拦截器定义在Controller层的子包
 
 `ProjectInterceptor`
 
@@ -9890,17 +9890,20 @@ import javax.servlet.http.HttpServletResponse;
 @Component
 public class ProjectInterceptor implements HandlerInterceptor {
 
+    // 在请求处理之前进行调用（Controller方法调用之前）
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
         System.out.println("preHandle...");
-        return true;
+        return true; // 返回true才会继续执行，返回false则会终止请求的原始操作，后续的拦截器方法也不再被调用
     }
 
+    // 请求处理之后进行调用，但是在视图被渲染之前（Controller方法调用之后）
     @Override
     public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler, ModelAndView modelAndView) throws Exception {
         System.out.println("postHandle...");
     }
 
+    // 在整个请求结束之后被调用，也就是在DispatcherServlet渲染了对应的视图之后执行（主要是用于进行资源清理工作）
     @Override
     public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) throws Exception {
         System.out.println("afterCompletion...");
@@ -9929,7 +9932,7 @@ import javax.annotation.Resource;
 public class SpringMvcSupport extends WebMvcConfigurationSupport {
 
     @Resource
-    private ProjectInterceptor projectInterceptor;
+    private ProjectInterceptor projectInterceptor; // 注入拦截器
 
     @Override
     protected void addResourceHandlers(ResourceHandlerRegistry registry) {
@@ -9938,14 +9941,154 @@ public class SpringMvcSupport extends WebMvcConfigurationSupport {
 
     @Override
     protected void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(projectInterceptor).addPathPatterns("/books");
+        registry.addInterceptor(projectInterceptor).addPathPatterns("/books", "/books/*");
     }
 }
 ```
 
+启动项目，发送请求调用接口，控制台打印结果如下：
+
+![调试工具发送books请求](./images/调试工具发送books请求.png)
+
+拦截器的执行流程：
+
+![拦截器的执行流程](./images/拦截器的执行流程.png)
 
 
-https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=72
+
+#### 配置简化
+
+`SpringMvcSupport`类可以使用标准接口**WebMvcConfigurer**简化编写（<span style="color:red;">注意：侵入式较强</span>）
+
+```java
+package com.stone.config;
+
+import com.stone.controller.interceptor.ProjectInterceptor;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.config.annotation.EnableWebMvc;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
+import javax.annotation.Resource;
+
+@Configuration
+@ComponentScan(basePackages = {"com.stone.controller"})
+@EnableWebMvc
+public class SpringMvcConfig implements WebMvcConfigurer {
+
+    @Resource
+    private ProjectInterceptor projectInterceptor; // 注入拦截器
+
+    @Override
+    public void addResourceHandlers(ResourceHandlerRegistry registry) {
+        registry.addResourceHandler("/pages/**").addResourceLocations("/pages/");
+    }
+
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(projectInterceptor).addPathPatterns("/books", "/books/*");
+    }
+}
+```
+
+### 拦截器参数
+
+我们在`preHandle`方法中打印这些参数看看
+
+```java
+public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+    String contentType = request.getHeader("Content-Type");
+    System.out.println("preHandle..." + contentType);
+    System.out.println(handler);
+    System.out.println(handler.getClass());
+    return true;
+}
+```
+
+控制台打印如下
+
+![调试工具发送books请求2](./images/调试工具发送books请求2.png)
+
+其中实参**handler**的类是`org.springframework.web.method.HandlerMethod`，
+
+其中一个成员属性`java.lang.reflect.Method`就是对Controller层方法的反射。
+
+![HandlerMethod类](./images/HandlerMethod类.png)
+
+通过**Method**属性，我们就可以获取到Controller层的原始方法
+
+```java
+public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+    String contentType = request.getHeader("Content-Type");
+    System.out.println("preHandle..." + contentType);
+    HandlerMethod handlerMethod = (HandlerMethod) handler;
+    System.out.println(handlerMethod.getMethod());
+    return true;
+}
+```
+
+控制台打印如下
+
+![调试工具发送books请求3](./images/调试工具发送books请求3.png)
+
+
+
+#### 前置处理
+
+```java
+public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+    System.out.println("preHandle...");
+    return true;
+}
+```
+
+参数
+
+- request：请求对象
+- response：响应对象
+- handler：被调用的处理器对象，本质上是一个方法对象，<span style="color:red;">对反射技术中的Method对象进行了再包装</span>
+
+返回值
+
+- 当返回值为false，被拦截的处理器将不再执行
+
+#### 后置处理
+
+```java
+public void postHandle(HttpServletRequest request,
+                       HttpServletResponse response,
+                       Object handler,
+                       ModelAndView modelAndView) throws Exception {
+    System.out.println("postHandle...");
+}
+```
+
+参数
+
+- modelAndView：如果处理器执行完成具有返回结果，可以读取到对应数据与页面信息，并进行调整
+
+#### 完成后处理
+
+```java
+public void afterCompletion(HttpServletRequest request,
+                            HttpServletResponse response,
+                            Object handler,
+                            Exception ex) throws Exception {
+    System.out.println("afterCompletion...");
+}
+```
+
+参数
+
+- ex：如果处理器执行过程中出现异常对象，可以针对异常情况进行单独处理
+
+### 拦截器链
+
+当配置多个拦截器时，就形成了拦截器链
+
+https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=74
 
 
 
