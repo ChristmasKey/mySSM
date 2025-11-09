@@ -1,0 +1,344 @@
+# myMaven笔记
+
+## Maven简介
+
+传统项目管理状态分析
+
+- jar包不统一，jar包不兼容
+- 工程升级维护过程操作繁琐
+- ……
+
+<span style="color:red;">Maven的本质是一个项目管理工具，将项目开发和管理过程抽象成一个项目对象模型（POM）</span>
+
+POM：Project Object Model 项目对象模型
+
+（<b style="color:blue;">关于pom.xml文件的内容，可以查看《POM文件帮助文档.md》</b>）
+
+![Maven简介](./images/Maven简介.png)
+
+**Maven的作用**
+
+- 项目构建：提供标准的、跨平台的自动化项目构建方式
+- 依赖管理：方便快捷的管理项目依赖的资源（jar包），避免资源间的版本冲突问题
+- 统一开发结构：提供标准的、统一的项目结构
+
+![Maven统一的项目结构](./images/Maven统一的项目结构.png)
+
+
+
+## Maven的下载&安装
+
+官网：https://maven.apache.org/
+
+下载地址：https://maven.apache.org/download.cgi
+
+![Maven下载页面](./images/Maven下载页面.png)
+
+将下载的压缩包解压后，可以看到如下目录结构
+
+![Maven目录结构](./images/Maven目录结构.png)
+
+配置环境变量
+
+JAVA_HOME配置：略
+
+MAVEN_HOME配置：
+
+1、新建**MAVEN_HOME**系统变量
+
+![MAVEN_HOME系统变量](./images/MAVEN_HOME系统变量.png)
+
+2、修改系统变量**Path**
+
+![修改系统变量Path](./images/修改系统变量Path.png)
+
+3、通过CMD命令验证Maven是否安装成功
+
+![验证Maven安装成功](./images/验证Maven安装成功.png)
+
+
+
+## 基础概念
+
+**仓库**
+
+- 仓库：用于存储资源，包含各种 jar 包
+- 仓库分类:
+    - 本地仓库：自己电脑上存储资源的仓库，连接远程仓库获取资源
+    - 远程仓库：非本机电脑上的仓库，为本地仓库提供资源
+        - 中央仓库: Maven 团队维护，存储所有资源的仓库
+        - 私服：部门 / 公司范围内存储资源的仓库，从中央仓库获取资源
+- 私服的作用:
+    - 保存具有版权的资源，包含购买或自主研发的 jar
+        - 中央仓库中的 jar 都是开源的，不能存储具有版权的资源
+    - 一定范围内共享资源，仅对内部开放，不对外共享
+
+<img src="./images/Maven仓库概念.png" alt="Maven仓库概念" style="zoom:50%;" />
+
+**坐标**
+
+- 什么是坐标？
+
+    - Maven 中的坐标用于描述仓库中资源的位置
+    - https://repo1.maven.org/maven2/
+
+- Maven 坐标主要组成
+
+    - groupId：定义当前 Maven 项目隶属组织名称（通常是域名反写，例如：org.mybatis）
+
+    - artifactId：定义当前 Maven 项目名称（通常是模块名称，例如 CRM、SMS）
+
+    - version：定义当前项目版本号
+
+    - packaging：定义该项目的打包方式
+
+- Maven 坐标的作用
+    - <span style="color:red;">使用唯一标识，唯一性定位资源位置，通过该标识可以将资源的识别与下载工作交由机器完成</span>
+
+
+
+## 仓库配置
+
+**配置本地仓库**
+
+![Maven配置本地仓库](./images/Maven配置本地仓库.png)
+
+**配置远程仓库（镜像仓库配置）**
+
+![Maven配置远程仓库](./images/Maven配置远程仓库.png)
+
+
+
+## 首个Maven项目
+
+### 手动生成
+
+手动创建Maven工程目录结构
+
+> project
+>
+> - src
+>     - main
+>         - java
+>             - com
+>                 - stone
+>                     - HelloWorld.java
+>         - resources
+>     - test
+>         - java
+>             - com
+>                 - stone
+>                     - HelloWorldTest.java
+>         - resources
+> - pom.xml
+
+`HelloWorld`
+
+```java
+package com.stone;
+
+public class HelloWorld {
+	public String hello(String name) {
+		System.out.println("Hello " + name);
+		return "Hello " + name;
+	}
+}
+```
+
+`HelloWorldTest`
+
+```java
+package com.stone;
+
+import org.junit.Test;
+import org.junit.Assert;
+
+public class HelloWorldTest {
+	
+	@Test
+	public void testHello() {
+		HelloWorld hw = new HelloWorld();
+		String res = hw.hello("World);
+		// 利用断言判断值是否相等
+		Assert.assertEquals("Hello World", res);
+	}
+}
+```
+
+`pom.xml`
+
+```xml
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <!--Maven对象模型版本号-->
+	<modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.stone</groupId>
+    <artifactId>project-java</artifactId>
+    <version>1.0</version>
+
+    <packaging>jar</packaging>
+
+    <name>project-java</name>
+
+    <dependencies>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>4.12</version>
+		</dependency>
+    </dependencies>
+</project>
+```
+
+使用Maven命令来构建项目
+
+<span style="color:red;">Maven命令使用mvn开头，后面添加功能参数，可以一次执行多个命令，使用空格分隔</span>
+
+```shell
+$ mvn compile	# 编译
+$ mvn clean		# 清理
+$ mvn test		# 测试
+$ mvn package	# 打包
+$ mvn install	# 安装到本地仓库
+```
+
+在项目的根路径下，使用cmd窗口来运行命令
+
+
+
+此外，我们还可以通过插件来创建项目工程
+
+- 创建工程
+
+```shell
+$ mvn archetype:generate
+$    -DgroupId={project-packaging}
+$    -DartifactId={project-name}
+$    -DarchetypeArtifactId=maven-archetype-quickstart
+$    -DinteractiveMode=false
+```
+
+- 创建java工程
+
+```shell
+$ mvn archetype:generate
+$    -DgroupId=com.stone
+$    -DartifactId=java-project
+$    -DarchetypeArtifactId=maven-archetype-quickstart
+$    -Dversion=0.0.1-snapshot 
+$    -DinteractiveMode=false
+```
+
+- 创建Web工程
+
+```shell
+$ mvn archetype:generate
+$    -DgroupId=com.itheima
+$    -DartifactId=web-project
+$    -DarchetypeArtifactId=maven-archetype-webapp
+$    -Dversion=0.0.1-snapshot
+$    -DinteractiveMode=false
+```
+
+
+
+### IDEA生成
+
+要想通过IDEA生成Maven项目，<span style="color:red;">首先需要给IDEA配置Maven</span>，
+
+我们创建一个空项目工程
+
+![创建一个空项目工程](./images/创建一个空项目工程.png)
+
+修改`Project Structure`中的Project SDK
+
+![修改Project SDK](./images/修改Project SDK.png)
+
+然后在IDEA中配置Maven
+
+![在IDEA中配置Maven](./images/在IDEA中配置Maven.png)
+
+#### 手工创建Java项目
+
+![手动创建Java项目](./images/手动创建Java项目.png)
+
+引入依赖
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.stone</groupId>
+    <artifactId>java01</artifactId>
+    <version>1.0-SNAPSHOT</version>
+
+    <properties>
+        <maven.compiler.source>8</maven.compiler.source>
+        <maven.compiler.target>8</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.12</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+</project>
+```
+
+编写类和方法
+
+![java01项目结构](./images/java01项目结构.png)
+
+`HelloWorld`
+
+```java
+package com.stone;
+
+public class HelloWorld {
+
+    public String sayHello(String name) {
+        System.out.println("Hello " + name);
+        return "Hello " + name;
+    }
+}
+```
+
+`HelloWorldTest`
+
+```java
+package com.stone;
+
+import org.junit.Assert;
+import org.junit.Test;
+
+public class HelloWorldTest {
+
+    @Test
+    public void testSayHello() {
+        HelloWorld helloWorld = new HelloWorld();
+        String res = helloWorld.sayHello("World");
+        Assert.assertEquals("Hello World", res);
+    }
+}
+```
+
+https://www.bilibili.com/video/BV1Ah411S7ZE?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=9
+
+#### 原型创建Java项目
+
+
+
+#### 原型创建Web项目
+
+
+
+#### 插件

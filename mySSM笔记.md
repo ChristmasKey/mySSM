@@ -10086,12 +10086,57 @@ public void afterCompletion(HttpServletRequest request,
 
 ### 拦截器链
 
-当配置多个拦截器时，就形成了拦截器链
+![拦截器链的执行顺序](./images/拦截器链的执行顺序.png)
 
-https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=74
+我们创建一个新的拦截器`ProjectInterceptor2`
 
+```java
+package com.stone.controller.interceptor;
 
+import org.springframework.stereotype.Component;
+import org.springframework.web.servlet.HandlerInterceptor;
+import org.springframework.web.servlet.ModelAndView;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
+@Component
+public class ProjectInterceptor2 implements HandlerInterceptor {
+
+    // 在请求处理之前进行调用（Controller方法调用之前）
+    @Override
+    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+        System.out.println("preHandle...222");
+        return true;
+    }
+
+    // 请求处理之后进行调用，但是在视图被渲染之前（Controller方法调用之后）
+    @Override
+    public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler, ModelAndView modelAndView) throws Exception {
+        System.out.println("postHandle...222");
+    }
+
+    // 在整个请求结束之后被调用，也就是在DispatcherServlet渲染了对应的视图之后执行（主要是用于进行资源清理工作）
+    @Override
+    public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) throws Exception {
+        System.out.println("afterCompletion...222");
+    }
+}
+```
+
+在配置类中注册拦截器
+
+```java
+public void addInterceptors(InterceptorRegistry registry) {
+    registry.addInterceptor(projectInterceptor).addPathPatterns("/books", "/books/*");
+    registry.addInterceptor(projectInterceptor2).addPathPatterns("/books", "/books/*");
+}
+```
+
+启动项目，发送请求，并查看控制台打印
+
+![拦截器链的控制台打印结果](./images/拦截器链的控制台打印结果.png)
 
 # END
+
+https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=75
