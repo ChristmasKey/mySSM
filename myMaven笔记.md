@@ -331,9 +331,23 @@ public class HelloWorldTest {
 }
 ```
 
-https://www.bilibili.com/video/BV1Ah411S7ZE?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=9
+通过Maven命令去构建项目
+
+![IDEA中的Maven构建命令](./images/IDEA中的Maven构建命令.png)
+
+当我们点击Test命令时，Maven会扫描并运行`test`目录下的测试类中的方法
+
+![Maven的Test命令执行结果](./images/Maven的Test命令执行结果.png)
+
+此外我们还可以自定义配置Maven运行环境（<span style="color:red;">方便我们进行Debug调试</span>）
+
+![自定义Maven运行环境](./images/自定义Maven运行环境.png)
 
 #### 原型创建Java项目
+
+
+
+https://www.bilibili.com/video/BV1Ah411S7ZE?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=10
 
 
 
