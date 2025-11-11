@@ -10,6 +10,8 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="java01" />
+        <module name="web01" />
+        <module name="java02" />
       </profile>
     </annotationProcessing>
   </component>

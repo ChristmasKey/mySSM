@@ -345,14 +345,62 @@ public class HelloWorldTest {
 
 #### 原型创建Java项目
 
+![使用Maven原型创建java项目工程](./images/使用Maven原型创建java项目工程.png)
 
+项目工程结构如下
 
-https://www.bilibili.com/video/BV1Ah411S7ZE?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=10
-
-
+![java02项目工程结构](./images/java02项目工程结构.png)
 
 #### 原型创建Web项目
 
+![使用Maven原型创建Web项目工程](./images/使用Maven原型创建Web项目工程.png)
 
+项目工程结构如下，需要我们手动添加`java`目录
+
+![web01项目工程结构](./images/web01项目工程结构.png)
 
 #### 插件
+
+对于Web工程，我们需要安装Tomcat插件，才能启动它
+
+在pom.xml中添加插件配置
+
+```xml
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.stone</groupId>
+    <artifactId>web01</artifactId>
+    <version>1.0-SNAPSHOT</version>
+
+    <packaging>war</packaging>
+
+    <name>web01 Maven Webapp</name>
+
+    <dependencies>
+    </dependencies>
+
+    <!--构建-->
+    <build>
+        <!--插件配置-->
+        <plugins>
+            <!--Tomcat插件-->
+            <plugin>
+                <groupId>org.apache.tomcat.maven</groupId>
+                <artifactId>tomcat7-maven-plugin</artifactId>
+                <version>2.2</version>
+                <!--Tomcat配置-->
+                <configuration>
+                    <!--路径-->
+                    <path>/</path>
+                    <!--端口-->
+                    <port>80</port>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+```
+
+https://www.bilibili.com/video/BV1Ah411S7ZE?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=11
