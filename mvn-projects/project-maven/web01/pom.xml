@@ -1,15 +1,20 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <!--指定pom的模型版本-->
     <modelVersion>4.0.0</modelVersion>
 
+    <!--项目坐标-->
     <groupId>com.stone</groupId>
     <artifactId>web01</artifactId>
+    <!--版本号，SNAPSHOT为快照版本，RELEASE为正式版本-->
     <version>1.0-SNAPSHOT</version>
 
+    <!--打包方式，web工程打war包，java工程打jar包-->
     <packaging>war</packaging>
 
-    <name>web01 Maven Webapp</name>
+    <name>web01</name>
 
+    <!--当前项目工程引入的所有依赖-->
     <dependencies>
     </dependencies>
 
@@ -27,7 +32,7 @@
                     <!--路径-->
                     <path>/</path>
                     <!--端口-->
-                    <port>80</port>
+                    <port>8090</port>
                 </configuration>
             </plugin>
         </plugins>

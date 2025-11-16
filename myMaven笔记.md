@@ -368,16 +368,21 @@ public class HelloWorldTest {
 ```xml
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <!--指定pom的模型版本-->
     <modelVersion>4.0.0</modelVersion>
 
+    <!--项目坐标-->
     <groupId>com.stone</groupId>
     <artifactId>web01</artifactId>
+    <!--版本号，SNAPSHOT为快照版本，RELEASE为正式版本-->
     <version>1.0-SNAPSHOT</version>
 
+    <!--打包方式，web工程打war包，java工程打jar包-->
     <packaging>war</packaging>
 
-    <name>web01 Maven Webapp</name>
+    <name>web01</name>
 
+    <!--当前项目工程引入的所有依赖-->
     <dependencies>
     </dependencies>
 
@@ -395,7 +400,7 @@ public class HelloWorldTest {
                     <!--路径-->
                     <path>/</path>
                     <!--端口-->
-                    <port>80</port>
+                    <port>8090</port>
                 </configuration>
             </plugin>
         </plugins>
@@ -403,4 +408,173 @@ public class HelloWorldTest {
 </project>
 ```
 
-https://www.bilibili.com/video/BV1Ah411S7ZE?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=11
+通过插件命令启动项目
+
+![Tomcat插件命令](./images/Tomcat插件命令.png)
+
+访问地址：http://localhost:8090/
+
+![web01项目启动结果](./images/web01项目启动结果.png)
+
+当然，我们也可以在自定义配置运行环境中配置插件的命令
+
+![自定义运行环境配置插件命令](./images/自定义运行环境配置插件命令.png)
+
+
+
+## 依赖管理
+
+**依赖配置**：配置当前项目工程运行所需的jar，一个项目工程可以配置多个依赖
+
+格式如下：
+
+```xml
+<!--当前项目工程引入的所有依赖-->
+<dependencies>
+    <!--每一个具体的依赖-->
+    <dependency>
+        <!--依赖的群组ID-->
+        <groupId>junit</groupId>
+        <!--依赖的项目ID-->
+        <artifactId>junit</artifactId>
+        <!--依赖的版本号-->
+        <version>4.12</version>
+    </dependency>
+</dependencies>
+```
+
+
+
+**依赖传递**
+
+依赖具有传递性
+
+- 直接依赖：在当前项目工程中通过依赖配置建立的依赖关系
+- 简介依赖：被配置的依赖资源如果依赖其他的资源，当前项目间接依赖其他资源
+
+<span style="color:red;">依赖传递冲突问题</span>
+
+- 路径优先：当依赖中出现相同的资源时，层级越深，优先级越低，层级越浅，优先级越高
+- 声明优先：当资源在相同层级被依赖时，配置顺序靠前的覆盖配置顺序靠后的
+- 特殊优先：当同级配置了相同资源的不同版本，后配置的覆盖先配置的
+
+![project01依赖传递](./images/project01依赖传递.png)
+
+我们在`project01`中依赖`junit`后，`junit`依赖的资源`hamcrest`也可以被间接使用到
+
+
+
+**可选依赖**：指对外隐藏当前所依赖的资源——不透明
+
+<span style="color:red;">在目标依赖中配置`optional`选项为 true</span>
+
+```xml
+<dependency>
+    <groupId>junit</groupId>
+    <artifactId>junit</artifactId>
+    <version>4.12</version>
+    <optional>true</optional>
+</dependency>
+```
+
+当我们在`project03`中将`junit`设置为可选依赖后，在`project02`中引入`project03`时是看不到`junit`依赖的，这就是可选依赖的<span style="color:red;">不透明性</span>
+
+![project03可选依赖](./images/project03可选依赖.png)
+
+
+
+**排除依赖**：指主动断开依赖的资源，被排除的资源无需指定版本——不需要
+
+<span style="color:red;">在引入目标依赖的地方配置`exclusions`选项</span>
+
+```xml
+<dependency>
+    <groupId>junit</groupId>
+    <artifactId>junit</artifactId>
+    <version>4.12</version>
+    <exclusions>
+        <exclusion>
+            <groupId>org.hamcrest</groupId>
+            <artifactId>hamcrest-core</artifactId>
+        </exclusion>
+    </exclusions>
+</dependency>
+```
+
+![project02排除依赖](./images/project02排除依赖.png)
+
+
+
+**依赖范围**：依赖的jar默认情况可以在任何地方使用，可以通过`scope`标签设定其作用范围
+
+作用范围
+
+- 主程序范围有效（main文件夹范围内）
+- 测试程序范围有效（test文件夹范围内）
+- 是否参与打包（package指令范围内）
+
+![常见scope值与对应范围](./images/常见scope值与对应范围.png)
+
+依赖范围的传递性
+
+![依赖范围的传递性](./images/依赖范围的传递性.png)
+
+
+
+## 生命周期与插件
+
+### 生命周期
+
+Maven的生命周期描述的是一次构建过程经历了多少个事件
+
+![Maven生命周期](./images/Maven生命周期.png)
+
+Maven对项目构建的生命周期划分为3套方案
+
+- **clean**：清理工作
+
+![clean生命周期](./images/clean生命周期.png)
+
+- **default**：核心工作，如编译、测试、打包、部署等
+
+![default生命周期](./images/default生命周期.png)
+
+- **site**：产生报告，发布站点等
+
+![site生命周期](./images/site生命周期.png)
+
+### 插件
+
+插件与生命周期内的阶段绑定，在执行到对应生命周期时执行对应的插件功能
+
+<span style="color:red;">默认Maven在各个生命周期上绑定有预设的功能</span>
+
+通过插件可以自定义其他功能，语法格式如下：
+
+```xml
+<build>
+    <plugins>
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-source-plugin</artifactId>
+            <version>2.2.1</version>
+            <executions>
+                <execution>
+                    <goals>
+                        <goal>jar</goal>
+                    </goals>
+                    <phase>generate-test-resources</phase>
+                </execution>
+            </executions>
+        </plugin>
+    </plugins>
+</build>
+```
+
+插件可以在Maven官网的`Maven Plugins`菜单页面查看&复制依赖
+
+
+
+## Maven高级
+
+https://www.bilibili.com/video/BV1Ah411S7ZE?spm_id_from=333.788.videopod.episodes&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=15
