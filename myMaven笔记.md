@@ -577,4 +577,109 @@ Maven对项目构建的生命周期划分为3套方案
 
 ## Maven高级
 
-https://www.bilibili.com/video/BV1Ah411S7ZE?spm_id_from=333.788.videopod.episodes&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=15
+### 分模块开发与设计
+
+<span style="color:blue;">一个项目工程的目录结构可以被划分成多个相互独立的子模块（子工程）</span>
+
+![工程模块与模块划分](./images/工程模块与模块划分.png)
+
+<span style="color:red;">接下来，我们就尝试以模块划分的形式来创建一个SSM整合项目</span>
+
+#### POJO拆分
+
+首先创建一个空项目`ssm_multi_modules`
+
+![ssm_multi_modules](./images/ssm_multi_modules.png)
+
+然后创建一个Maven模块`ssm_pojo`
+
+![ssm_pojo](./images/ssm_pojo.png)
+
+删改后项目结构如下：
+
+![ssm_pojo项目结构](./images/ssm_pojo项目结构.png)
+
+在其中创建`User`类
+
+```java
+package com.stone.domain;
+
+import java.io.Serializable;
+import java.util.Date;
+
+public class User implements Serializable {
+    private static final long serialVersionUID = 1L;
+    private Integer uuid;
+    private String userName;
+    private String password;
+    private String realName;
+    private Integer gender;
+    private Date birthday;
+
+    public Integer getUuid() {
+        return uuid;
+    }
+
+    public void setUuid(Integer uuid) {
+        this.uuid = uuid;
+    }
+
+    public String getUserName() {
+        return userName;
+    }
+
+    public void setUserName(String userName) {
+        this.userName = userName;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public String getRealName() {
+        return realName;
+    }
+
+    public void setRealName(String realName) {
+        this.realName = realName;
+    }
+
+    public Integer getGender() {
+        return gender;
+    }
+
+    public void setGender(Integer gender) {
+        this.gender = gender;
+    }
+
+    public Date getBirthday() {
+        return birthday;
+    }
+
+    public void setBirthday(Date birthday) {
+        this.birthday = birthday;
+    }
+
+    @Override
+    public String toString() {
+        return "User{" +
+                "uuid=" + uuid +
+                ", userName='" + userName + '\'' +
+                ", password='" + password + '\'' +
+                ", realName='" + realName + '\'' +
+                ", gender=" + gender +
+                ", birthday=" + birthday +
+                '}';
+    }
+}
+```
+
+#### DAO拆分
+
+创建一个Maven模块`ssm_dao`
+
+https://www.bilibili.com/video/BV1Ah411S7ZE?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=16
