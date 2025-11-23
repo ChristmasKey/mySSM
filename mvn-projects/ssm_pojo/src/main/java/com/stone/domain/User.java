@@ -1,5 +1,7 @@
 package com.stone.domain;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 import java.io.Serializable;
 import java.util.Date;
 
@@ -10,6 +12,7 @@ public class User implements Serializable {
     private String password;
     private String realName;
     private Integer gender;
+    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
     private Date birthday;
 
     public Integer getUuid() {
