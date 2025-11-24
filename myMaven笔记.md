@@ -1580,4 +1580,57 @@ public class UserController {
 
 ### 继承与聚合
 
-https://www.bilibili.com/video/BV1Ah411S7ZE?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=19
+#### 聚合
+
+<span style="color:red;">多模块构建维护问题</span>：在上面我们拆分的模块中，各个模块依次依赖，并且这些模块都会通过`install`命令安装到Maven的本地仓库中。一旦其中某个模块有所改动重新`install`，其他模块很有可能没被通知到，甚至不能正常使用被改动的模块。
+
+<span style="color:red;">因此，我们需要一个模块来统一管理所有的模块，统一执行mvn命令（统一`compile`、`install`等）。这种工作机制称为**聚合**！这个工程模块称为**聚合模块**！</span>
+
+
+
+之前我们创建的空项目工程`ssm_multi_modules`可以用来做构建管理，创建一个新的`pom.xml`文件
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.stone</groupId>
+    <artifactId>ssm_multi_modules</artifactId>
+    <version>1.0-SNAPSHOT</version>
+
+    <!--定义该工程用于进行构建管理-->
+    <packaging>pom</packaging>
+
+    <properties>
+        <maven.compiler.source>8</maven.compiler.source>
+        <maven.compiler.target>8</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <!--管理的模块列表-->
+    <modules>
+        <module>../ssm_pojo</module>
+        <module>../ssm_dao</module>
+        <module>../ssm_service</module>
+        <module>../ssm_controller</module>
+    </modules>
+
+</project>
+```
+
+重新加载项目后，可以看到如下结构
+
+![ssm_multi_modules的模块管理](./images/ssm_multi_modules的模块管理.png)
+
+通过`ssm_multi_modules`的Maven生命周期命令，就可以统一控制几个模块一起执行命令了，
+
+<span style="color:red;">且每个模块执行命令的顺序是按照依赖顺序来的，与`pom.xml`中配置顺序无关。</span>
+
+![多模块统一构建](./images/多模块统一构建.png)
+
+#### 继承
+
+https://www.bilibili.com/video/BV1Ah411S7ZE?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=20
