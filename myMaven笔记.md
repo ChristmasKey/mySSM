@@ -1633,4 +1633,335 @@ public class UserController {
 
 #### 继承
 
-https://www.bilibili.com/video/BV1Ah411S7ZE?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=20
+`ssm_multi_modules`模块除了可以做上面的**模块聚合**管理，还可以用来将所有模块的依赖进行统一管理，从而各个模块只需要作为子工程对依赖进行**继承**就可以直接使用，避免了版本冲突的问题。
+
+在`pom.xml`文件中添加<span style="color:red;">dependencyManagement</span>标签来进行依赖管理（<span style="color:red;">我们自己的子模块依赖也可以放在这里管理</span>）
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.stone</groupId>
+    <artifactId>ssm_multi_modules</artifactId>
+    <version>1.0-SNAPSHOT</version>
+
+    <!--定义该工程用于进行构建管理-->
+    <packaging>pom</packaging>
+
+    <properties>
+        <maven.compiler.source>8</maven.compiler.source>
+        <maven.compiler.target>8</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <!--管理的模块列表-->
+    <modules>
+        <module>../ssm_pojo</module>
+        <module>../ssm_dao</module>
+        <module>../ssm_service</module>
+        <module>../ssm_controller</module>
+    </modules>
+
+    <!--依赖管理-->
+    <dependencyManagement>
+        <dependencies>
+            <!--Spring-->
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-context</artifactId>
+                <version>5.3.27</version>
+            </dependency>
+            <!--Mybatis-->
+            <dependency>
+                <groupId>org.mybatis</groupId>
+                <artifactId>mybatis</artifactId>
+                    <version>3.5.13</version>
+            </dependency>
+            <!--Mybatis-Spring-->
+            <dependency>
+                <groupId>org.mybatis</groupId>
+                <artifactId>mybatis-spring</artifactId>
+                <version>2.0.6</version>
+            </dependency>
+            <!--数据库连接驱动-->
+            <dependency>
+                <groupId>mysql</groupId>
+                <artifactId>mysql-connector-java</artifactId>
+                <version>8.0.33</version>
+            </dependency>
+            <!--数据库连接池-->
+            <dependency>
+                <groupId>com.alibaba</groupId>
+                <artifactId>druid</artifactId>
+                <version>1.2.23</version>
+            </dependency>
+            <!--Spring JDBC-->
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-jdbc</artifactId>
+                <version>5.3.27</version>
+            </dependency>
+            <!--分页插件-->
+            <dependency>
+                <groupId>com.github.pagehelper</groupId>
+                <artifactId>pagehelper</artifactId>
+                <version>5.3.2</version>
+            </dependency>
+            <!--SpringMVC-->
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-webmvc</artifactId>
+                <version>5.3.27</version>
+            </dependency>
+            <!--ServletApi依赖(设置为provided是因为Tomcat中存在相同的包)-->
+            <dependency>
+                <groupId>javax.servlet</groupId>
+                <artifactId>javax.servlet-api</artifactId>
+                <version>3.1.0</version>
+                <scope>provided</scope>
+            </dependency>
+            <!--Jackson依赖(用于处理Json数据)-->
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-databind</artifactId>
+                <version>2.14.1</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-annotations</artifactId>
+                <version>2.14.1</version>
+            </dependency>
+            <!--Spring-JUnit-->
+            <dependency>
+                <groupId>junit</groupId>
+                <artifactId>junit</artifactId>
+                <version>4.12</version>
+            </dependency>
+            <!--Spring-Test-->
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-test</artifactId>
+                <version>5.3.26</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+</project>
+```
+
+然后在各个子模块的`pom.xml`指定父工程坐标，<span style="color:red;">并移除依赖坐标中的版本号，即可继承父工程中管理的依赖版本</span>
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <!--指定当前工程的父工程-->
+    <parent>
+        <groupId>com.stone</groupId>
+        <artifactId>ssm_multi_modules</artifactId>
+        <version>1.0-SNAPSHOT</version>
+        <!--指定父工程的pom文件相对路径-->
+        <relativePath>../ssm_multi_modules/pom.xml</relativePath>
+    </parent>
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <!--子工程的groupId和version应尽量与父工程一致，故可以省略-->
+    <!--<groupId>com.stone</groupId>-->
+    <!--注意！！！此处需要改为指定模块的名称-->
+    <artifactId>ssm_pojo</artifactId>
+    <!--<version>1.0-SNAPSHOT</version>-->
+
+    <!--指定当前工程打包方式（默认为jar）-->
+    <!--<packaging>jar</packaging>-->
+
+    <properties>
+        <maven.compiler.source>8</maven.compiler.source>
+        <maven.compiler.target>8</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <dependencies>
+        <!--略...-->
+    </dependencies>
+</project>
+```
+
+同理，Maven插件也可以在父工程中进行统一管理和配置
+
+```xml
+<build>
+    <!--插件管理-->
+    <pluginManagement>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.tomcat.maven</groupId>
+                <artifactId>tomcat7-maven-plugin</artifactId>
+                <version>2.2</version>
+                <configuration>
+                    <port>8888</port>
+                    <path>/</path>
+                </configuration>
+            </plugin>
+        </plugins>
+    </pluginManagement>
+</build>
+```
+
+<span style="color:red;">Maven中可以继承的资源如下</span>
+
+![Maven中可继承的资源](./images/Maven中可继承的资源.png)
+
+
+
+### 属性
+
+在`pom.xml`中，我们可以将依赖的版本号等内容抽成一个属性，用于统一管理和使用，从而可以避免不同依赖键版本冲突的问题
+
+```xml
+<properties>
+    <spring.version>5.3.27</spring.version>
+</properties>
+
+<!--Spring-->
+<dependency>
+    <groupId>org.springframework</groupId>
+    <artifactId>spring-context</artifactId>
+    <version>${spring.version}</version>
+</dependency>
+```
+
+#### 属性类别
+
+- 自定义属性：等同于定义变量，方便统一维护
+
+```xml
+<!--定义格式-->
+<properties>
+    <spring.version>5.3.27</spring.version>
+    <junit.version>4.12</junit.version>
+</properties>
+
+<!--调用格式-->
+<dependency>
+    <groupId>org.springframework</groupId>
+    <artifactId>spring-context</artifactId>
+    <version>${spring.version}</version>
+</dependency>
+```
+
+- 内置属性：使用Maven内置属性，快速配置
+
+```xml
+${basedir}
+${version}
+```
+
+- Setting属性：使用Maven配置文件`settings.xml`中的标签属性，用于动态配置
+
+```xml
+${settings.localRepository}
+```
+
+- Java系统属性：读取Java系统属性
+
+```xml
+<!--调用格式-->
+${user.home}
+<!--系统属性查询方式-->
+mvn help:system
+```
+
+- 环境变量属性：读取环境变量属性
+
+```xml
+<!--调用格式-->
+${env.JAVA_HOME}
+<!--系统属性查询方式-->
+mvn help:system
+```
+
+
+
+### 版本管理
+
+![工程版本](./images/工程版本.png)
+
+---
+
+![工程版本号约定](./images/工程版本号约定.png)
+
+
+
+### 多环境配置
+
+`pom.xml`
+
+```xml
+<!--创建多环境-->
+<profiles>
+    <!--生产环境-->
+    <profile>
+        <id>production</id>
+        <properties>
+            <jdbc.url>jdbc:mysql://localhost:3306/ssm_produce?useSSL=false&amp;serverTimezone=UTC</jdbc.url>
+        </properties>
+    </profile>
+    <!--开发环境-->
+    <profile>
+        <id>development</id>
+        <properties>
+            <jdbc.url>jdbc:mysql://localhost:3306/ssm_dev?useSSL=false&amp;serverTimezone=UTC</jdbc.url>
+        </properties>
+        <!--设置为默认启动环境-->
+        <activation>
+            <activeByDefault>true</activeByDefault>
+        </activation>
+    </profile>
+</profiles>
+```
+
+<span style="color:red;">加载指定环境配置：mvn 指令 -P 环境id</span>
+
+```shell
+$ mvn install -P development
+```
+
+
+
+**资源管理**：通过在pom.xml中定义属性值，并在资源文件中加载它
+
+```xml
+<build>
+    ...
+    <!--资源管理-->
+    <resources>
+        <!--配置资源文件-->
+        <resource>
+            <directory>${project.basedir}/src/main/resources</directory>
+            <filtering>true</filtering>
+        </resource>
+    </resources>
+    <testResources>
+        <!--配置测试资源文件-->
+        <testResource>
+            <directory>${project.basedir}/src/test/resources</directory>
+            <filtering>true</filtering>
+        </testResource>
+    </testResources>
+</build>
+```
+
+`jdbc.properties`
+
+```properties
+jdbc.driver=com.mysql.cj.jdbc.Driver
+#jdbc.url=jdbc:mysql://localhost:3306/spring_stone
+jdbc.url=${jdbc.url}
+jdbc.username=root
+jdbc.password=1234
+```
+
