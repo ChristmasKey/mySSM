@@ -1965,3 +1965,111 @@ jdbc.username=root
 jdbc.password=1234
 ```
 
+
+
+### 私服
+
+![Maven私服](./images/Maven私服.png)
+
+当一个项目工程的不同模块由不同的人负责开发，并且这些模块间存在依赖关系时，Maven的本地仓库就无法满足协作开发的需求了，但是我们又不能将自己的私人依赖直接上传到公网的中央仓库，<span style="color:red;">此时我们就需要搭建一台私服服务器，来实现局域网内的资源共享。</span>
+
+Maven私服搭建产品：Nexus，下载地址 https://help.sonatype.com/repomanager3/download
+
+![Nexus下载](./images/Nexus下载.png)
+
+下载后解压目录如下
+
+![Nexus解压](./images/Nexus解压.png)
+
+使用cmd命令窗口进入Nexus的bin目录下，依次运行如下命令：
+
+```shell
+# 安装Nexus Repository
+$ install-nexus-service.bat
+# Start the service
+$ nexus.exe //ES//SonatypeNexusRepository
+```
+
+另有其他命令：
+
+```shell
+# Stop the service
+$ nexus.exe //SS//SonatypeNexusRepository
+# Uninstall the service
+$ nexus.exe //DS//SonatypeNexusRepository
+```
+
+<b style="color:red;">报错!</b> 如遇服务启动失败，如下报错
+
+![Nexus启动服务报错](./images/Nexus启动服务报错.png)
+
+可以在`sonatype-work\nexus3\log`目录下查看启动日志`commons-daemon.yyyy-MM-dd.log`
+
+![Nexus服务启动日志](./images/Nexus服务启动日志.png)
+
+
+
+可以看到，Nexus服务本应该用解压目录中自带的jdk21启动，却意外检测到了环境变量中配置的jdk8，因此我们需要执行下面的命令来更正jdk环境
+
+```shell
+# 更新服务配置
+$ nexus.exe //US/SonatypeNexusRepository 
+  --Jvm ${Nexus unpacked directory}\nexus-3.87.0-03\jdk\temurin_21.0.9_10_windows_x86_64\jdk-21.0.9+10\bin\server\jvm.dll
+# 重新启动服务
+$ nexus.exe //ES//SonatypeNexusRepository
+```
+
+[参考文章：关于用 Nexus 创建私服，服务启动失败的坑](https://blog.csdn.net/qq_55545355/article/details/149454966)
+
+然后访问 http://localhost:8081
+
+![Nexus服务图形化页面](./images/Nexus服务图形化页面.png)
+
+#### 仓库分类
+
+- 宿主仓库hosted：保存无法从中央仓库获取的资源
+    - 自主研发
+    - 第三方非开源项目
+- 代理仓库proxy
+    - 代理远程仓库，通过Nexus访问其他公共仓库，例如中央仓库
+- 仓库组group
+    - 将若干个仓库组成一个群组，简化配置
+    - 仓库组不能保存资源，属于设计型仓库
+
+#### 手动上传组件
+
+**创建宿主仓库**
+
+![创建宿主仓库1](./images/创建宿主仓库1.png)
+
+---
+
+![创建宿主仓库2](./images/创建宿主仓库2.png)
+
+---
+
+![创建宿主仓库3](./images/创建宿主仓库3.png)
+
+**配置仓库分组**
+
+![配置仓库分组1](./images/配置仓库分组1.png)
+
+---
+
+![配置仓库分组2](./images/配置仓库分组2.png)
+
+**手动上传组件**
+
+![手动上传组件1](./images/手动上传组件1.png)
+
+---
+
+![手动上传组件2](./images/手动上传组件2.png)
+
+---
+
+![手动上传组件3](./images/手动上传组件3.png)
+
+#### IDEA环境中资源上传与下载
+
+https://www.bilibili.com/video/BV1Ah411S7ZE?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=28
