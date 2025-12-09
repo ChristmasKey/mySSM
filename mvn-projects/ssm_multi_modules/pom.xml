@@ -163,4 +163,16 @@
             </testResource>
         </testResources>
     </build>
+
+    <!--发布配置管理（将资源发布到私服上）-->
+    <distributionManagement>
+        <repository>
+            <id>stone-release</id>
+            <url>http://localhost:8081/repository/stone-release/</url>
+        </repository>
+        <snapshotRepository>
+            <id>stone-snapshots</id>
+            <url>http://localhost:8081/repository/stone-snapshots/</url>
+        </snapshotRepository>
+    </distributionManagement>
 </project>

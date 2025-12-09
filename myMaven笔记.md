@@ -2074,6 +2074,8 @@ $ nexus.exe //ES//SonatypeNexusRepository
 
 ![IDEA连接Maven私服](./images/IDEA连接Maven私服.png)
 
+##### Step1
+
 首先在本地Maven的配置文件`settings.xml`中添加配置
 
 ```xml
@@ -2097,7 +2099,7 @@ $ nexus.exe //ES//SonatypeNexusRepository
         <username>admin</username>
         <password>${Nexus的登录密码}</password>
     </server>
-    <!--新建snapshots仓库并配置-->
+    <!--新建snapshots仓库并配置（新建时注意修改Version Policy为Snapshot！！！）-->
     <server>
         <id>stone-snapshots</id>
         <username>admin</username>
@@ -2109,5 +2111,41 @@ $ nexus.exe //ES//SonatypeNexusRepository
 ![Maven私服url拷贝](./images/Maven私服url拷贝.png)
 
 最终配置截图：
+
+![本地Maven配置私服1](./images/本地Maven配置私服1.png)
+
+---
+
+![本地Maven配置私服2](./images/本地Maven配置私服2.png)
+
+##### Step2
+
+在项目工程的pom.xml中添加配置
+
+```xml
+<!--发布配置管理（将资源发布到私服上）-->
+<distributionManagement>
+    <repository>
+        <id>stone-release</id>
+        <url>http://localhost:8081/repository/stone-release/</url>
+    </repository>
+    <snapshotRepository>
+        <id>stone-snapshots</id>
+        <url>http://localhost:8081/repository/stone-snapshots/</url>
+    </snapshotRepository>
+</distributionManagement>
+```
+
+执行Maven命令`deploy`
+
+![执行deploy命令](./images/执行deploy命令.png)
+
+当看到如下结果时，表明资源发布成功，上传到了私服上
+
+![deploy命令执行结果](./images/deploy命令执行结果.png)
+
+我们在私服仓库中可以看到发布的资源
+
+![资源成功发布到私服上](./images/资源成功发布到私服上.png)
 
 https://www.bilibili.com/video/BV1Ah411S7ZE?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=29
