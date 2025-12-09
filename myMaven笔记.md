@@ -2072,4 +2072,42 @@ $ nexus.exe //ES//SonatypeNexusRepository
 
 #### IDEA环境中资源上传与下载
 
-https://www.bilibili.com/video/BV1Ah411S7ZE?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=28
+![IDEA连接Maven私服](./images/IDEA连接Maven私服.png)
+
+首先在本地Maven的配置文件`settings.xml`中添加配置
+
+```xml
+<mirrors>
+    <!--配置私服镜像-->
+    <mirror>
+        <id>nexus-stone</id>
+        <!--指定匹配规则，只有符合匹配规则的资源才从这个镜像中获取，*表示所有-->
+        <mirrorOf>*</mirrorOf>
+        <name>stone-mirror</name>
+        <!--url拷贝方式见下图-->
+        <url>http://localhost:8081/repository/maven-public/</url>
+    </mirror>
+</mirrors>
+
+<!--配置Maven私服的访问权限，用户名&密码-->
+<servers>
+    <server>
+        <!--id的值与私服仓库名保持一致-->
+        <id>stone-releases</id>
+        <username>admin</username>
+        <password>${Nexus的登录密码}</password>
+    </server>
+    <!--新建snapshots仓库并配置-->
+    <server>
+        <id>stone-snapshots</id>
+        <username>admin</username>
+        <password>${Nexus的登录密码}</password>
+    </server>
+</servers>
+```
+
+![Maven私服url拷贝](./images/Maven私服url拷贝.png)
+
+最终配置截图：
+
+https://www.bilibili.com/video/BV1Ah411S7ZE?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=29
