@@ -65,7 +65,7 @@ SpringBoot框架的设计目的是用来<span style="color:red;">简化Spring应
 </project>
 ```
 
-修改项目的java版本和“Language Level”
+修改项目的**Java版本**和“**Language Level**”
 
 ![修改项目的java版本](./images/修改项目的java版本.png)
 
@@ -150,8 +150,74 @@ SpringBoot
 
 
 
-关于SpringBoot项目的`pom.xml`文件
+**起步依赖**
+
+在SpringBoot项目的`pom.xml`文件中
+
+![起步依赖（启动器）](./images/起步依赖（启动器）.png)
+
+像上图中这些依赖一般称为起步依赖，依赖名称中常带有 **starter** 单词，这些依赖定义了当前项目可能使用的所有依赖坐标，以达到<span style="color:red;">减少依赖配置</span>目的。
+
+其中，**parent** 标签内是所有SpringBoot项目都要继承的父项目，定义了若干个坐标版本号（dependencyManagement 而非 dependencies），以达到<span style="color:red;">减少依赖冲突</span>目的。
 
 
 
-https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=93
+**辅助功能**：在SpringBoot的起步依赖中还包含了一些辅助功能的依赖，例如内置的Tomcat服务器、JUnit、日志等。
+
+对于这些辅助功能，我们可以手动将其排除或替换，例如我们可以将Tomcat服务器替换为Jetty服务器：
+
+```xml
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-web</artifactId>
+    <exclusions>
+        <exclusion>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-tomcat</artifactId>
+        </exclusion>
+    </exclusions>
+</dependency>
+
+<!--Jetty服务器-->
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-jetty</artifactId>
+</dependency>
+```
+
+
+
+**SpringBoot程序启动**
+
+SpringBoot程序通过引导类来启动，引导类是项目的入口，运行main方法就可以启动项目
+
+```java
+@SpringBootApplication
+public class Springboot01QuickstartApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(Springboot01QuickstartApplication.class, args);
+    }
+
+}
+```
+
+<span style="color:red;">SpringBoot项目采用jar的打包方式</span>
+
+
+
+## 基础配置
+
+SpringBoot提供了多种属性配置方式
+
+- properties
+- yml
+- yaml
+
+
+
+创建项目工程`springboot_02_base_config`，创建方式同上
+
+
+
+https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=95
