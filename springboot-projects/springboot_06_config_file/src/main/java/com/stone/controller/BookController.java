@@ -10,8 +10,8 @@ import org.springframework.web.bind.annotation.RestController;
 public class BookController {
 
     @GetMapping("/{id}")
-    public String getById(@PathVariable Integer id) {
+    public String getBookById(@PathVariable String id) {
         System.out.println("id ==> " + id);
-        return "Hello, Springboot!";
+        return "Hello, SpringBoot!";
     }
 }

@@ -1,0 +1,31 @@
+spring:
+  profiles:
+    # 读取Maven中指定的运行环境
+    active: ${profile.active}
+
+---
+# 开发环境
+spring:
+  config:
+    activate:
+      on-profile: dev
+server:
+  port: 8090
+
+---
+# 测试环境
+spring:
+  config:
+    activate:
+      on-profile: test
+server:
+  port: 8091
+
+---
+# 生产环境
+spring:
+  config:
+    activate:
+      on-profile: prod
+server:
+  port: 8092

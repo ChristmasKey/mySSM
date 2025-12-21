@@ -1,0 +1,18 @@
+# 自定义数据
+lesson: "SpringBoot"
+enterprise:
+  name: "北京智谱华章科技有限公司"
+  address: "北京市海淀区中关村南大街27号"
+  phone: "010-12345678"
+  email: "info@zhishupuhuazhang.com"
+  website: "https://www.zhishupuhuazhang.com"
+  employees:
+    - name: "张三"
+      age: 30
+      position: "软件工程师"
+    - name: "李四"
+      age: 25
+      position: "产品经理"
+    - name: "王五"
+      age: 35
+      position: "项目经理"

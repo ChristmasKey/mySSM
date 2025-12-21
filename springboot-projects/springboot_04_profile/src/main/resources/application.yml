@@ -1,0 +1,37 @@
+# 设置启用的环境
+spring:
+  profiles:
+    active: test
+
+---
+# 开发环境
+spring:
+  application:
+    name: springboot_04_profile
+  config:
+    activate:
+      on-profile: dev
+server:
+  port: 8080
+
+---
+# 测试环境
+spring:
+  application:
+    name: springboot_04_profile
+  config:
+    activate:
+      on-profile: test
+server:
+  port: 8081
+
+---
+# 生产环境
+spring:
+  application:
+    name: springboot_04_profile
+  config:
+    activate:
+      on-profile: prod
+server:
+  port: 8082
