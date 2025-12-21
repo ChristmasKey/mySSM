@@ -663,11 +663,339 @@ spring:
 
 
 
+**SpringBoot整合Junit步骤如下**
+
+创建项目工程`springboot_07_junit_test`，创建方式同上（<span style="color:red;">不勾选Web依赖</span>）
+
+此时项目的`pom.xml`中依赖如下
+
+```xml
+<dependencies>
+    <!--由于没有勾选Web依赖，所以此处的起步依赖发生了变更-->
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter</artifactId>
+    </dependency>
+    <!--SpringBoot单元测试依赖，包含Junit-->
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-test</artifactId>
+        <scope>test</scope>
+    </dependency>
+</dependencies>
+```
+
+创建service层用于单元测试
+
+`BookService`
+
+```java
+package com.stone.service;
+
+public interface BookService {
+
+    public void save();
+}
+```
+
+`BookServiceImpl`
+
+```java
+package com.stone.service.impl;
+
+import com.stone.service.BookService;
+import org.springframework.stereotype.Service;
+
+@Service
+public class BookServiceImpl implements BookService {
+
+    @Override
+    public void save() {
+        System.out.println("book service is running...");
+    }
+
+}
+```
+
+然后在`test`目录下编写单元测试方法
+
+```java
+package com.stone;
+
+import com.stone.service.BookService;
+import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.SpringBootTest;
+
+import javax.annotation.Resource;
+
+@SpringBootTest
+class Springboot07JunitTestApplicationTests {
+
+    @Resource
+    private BookService bookService;
+
+    @Test
+    void contextLoads() {
+        bookService.save();
+    }
+
+}
+```
+
+如上单元测试就完成了，其中：
+
+**@RunWith(SpringJunit4ClassRunner.class)** 已经被SpringBoot简化为默认配置，所以不用再显式编写；
+
+**@ContextConfiguration(classes = SpringConfig.class)** 也是同理，并且<span style="color:red;">SpringBoot还默认将项目启动的引导类**Springboot07JunitTestApplication**作为Spring配置类去加载，故不需要再额外创建Spring配置类了；</span>
+
+
+
+关于@SpringBootTest注解
+
+![SpringBootTest注解](./images/SpringBootTest注解.png)
+
+
+
 ### SSM
 
+<span style="color:red;">SpringBoot不需要在额外整合Spring、SpringMVC了</span>
+
+#### Mybatis
+
+![Spring整合Mybatis复习](./images/Spring整合Mybatis复习.png)
+
+创建项目工程`springboot_08_mybatis`
+
+![创建springboot项目整合mybatis](./images/创建springboot项目整合mybatis.png)
+
+修改`pom.xml`
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>2.5.6</version>
+        <relativePath/> <!-- lookup parent from repository -->
+    </parent>
+
+    <groupId>com.stone</groupId>
+    <artifactId>springboot_08_mybatis</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+
+    <properties>
+        <java.version>1.8</java.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.mybatis.spring.boot</groupId>
+            <artifactId>mybatis-spring-boot-starter</artifactId>
+            <version>2.3.1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>
+```
+
+添加配置
+
+```yaml
+spring:
+  application:
+    name: springboot_08_mybatis
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/ssm_db?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai
+    username: root
+    password: 1234
+```
+
+编写domain和dao
+
+`Book`
+
+```java
+package com.stone.domain;
+
+public class Book {
+
+    private Integer id;
+    private String name;
+    private String type;
+    private String description;
+
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    @Override
+    public String toString() {
+        return "Book{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", type='" + type + '\'' +
+                ", description='" + description + '\'' +
+                '}';
+    }
+}
+```
+
+`BookDao`
+
+```java
+package com.stone.dao;
+
+import com.stone.domain.Book;
+import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Select;
+
+@Mapper // 通过该注解注册Dao
+public interface BookDao {
+
+    @Select("select * from tbl_book where id = #{id}")
+    public Book getById(int id);
+}
+```
+
+编写测试类
+
+```java
+package com.stone;
+
+import com.stone.dao.BookDao;
+import com.stone.domain.Book;
+import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.SpringBootTest;
+
+import javax.annotation.Resource;
+
+@SpringBootTest
+class Springboot08MybatisApplicationTests {
+
+    @Resource
+    private BookDao bookDao;
+
+    @Test
+    void contextLoads() {
+        Book book = bookDao.getById(1);
+        System.out.println(book);
+    }
+
+}
+```
+
+运行并查看测试结果
+
+![springboot整合mybatis单元测试结果](./images/springboot整合mybatis单元测试结果.png)
 
 
-#### MybatisPlus
 
-https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=101
+#### Druid数据源
+
+接着我们尝试去更换Druid数据源
+
+导入依赖
+
+```xml
+<dependency>
+    <groupId>com.alibaba</groupId>
+    <artifactId>druid</artifactId>
+    <version>1.2.23</version>
+</dependency>
+```
+
+修改配置
+
+```yaml
+spring:
+  application:
+    name: springboot_08_mybatis
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/ssm_db?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai
+    username: root
+    password: 1234
+    # 更换Druid数据源
+    type: com.alibaba.druid.pool.DruidDataSource
+```
+
+
+
+#### 整合案例
+
+创建项目工程`springboot_09_ssm`
+
+`pom.xml`
+
+```xml
+```
+
+`application.yml`
+
+```yaml
+```
+
+编写Dao、Service、Controller，详见项目
+
+**略**
+
+
+
+### MybatisPlus
+
+https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=104
 
