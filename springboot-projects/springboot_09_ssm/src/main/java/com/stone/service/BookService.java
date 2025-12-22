@@ -6,11 +6,11 @@ import java.util.List;
 
 public interface BookService {
 
-    public int save(Book book);
+    public boolean save(Book book);
 
-    public int delete(Integer id);
+    public boolean delete(Integer id);
 
-    public int update(Book book);
+    public boolean update(Book book);
 
     public Book getById(Integer id);
 

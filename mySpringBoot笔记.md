@@ -982,16 +982,126 @@ spring:
 `pom.xml`
 
 ```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>2.5.6</version>
+		<relativePath/> <!-- lookup parent from repository -->
+	</parent>
+
+	<groupId>com.stone</groupId>
+	<artifactId>springboot_09_ssm</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+
+	<properties>
+		<java.version>1.8</java.version>
+	</properties>
+
+	<dependencies>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.mybatis.spring.boot</groupId>
+			<artifactId>mybatis-spring-boot-starter</artifactId>
+			<version>2.3.1</version>
+		</dependency>
+
+		<dependency>
+			<groupId>mysql</groupId>
+			<artifactId>mysql-connector-java</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>com.alibaba</groupId>
+			<artifactId>druid</artifactId>
+			<version>1.2.23</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+		</plugins>
+	</build>
+
+</project>
 ```
 
 `application.yml`
 
 ```yaml
+spring:
+  application:
+    name: springboot_09_ssm
+  datasource:
+    type: com.alibaba.druid.pool.DruidDataSource
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/ssm_db?userSSL=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai
+    username: root
+    password: 1234
 ```
 
 编写Dao、Service、Controller，详见项目
 
 **略**
+
+编写Service层的单元测试
+
+```java
+package com.stone.service;
+
+import com.stone.domain.Book;
+import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.SpringBootTest;
+
+import javax.annotation.Resource;
+import java.util.List;
+
+@SpringBootTest
+public class BookServiceTest {
+
+    @Resource
+    private BookService bookService;
+
+    @Test
+    public void testGetById() {
+        Book book = bookService.getById(2);
+        System.out.println(book);
+    }
+
+    @Test
+    public void testGetAll() {
+        List<Book> bookList = bookService.getAll();
+        System.out.println(bookList);
+    }
+}
+```
+
+拷贝静态资源到`static`目录下
+
+![拷贝静态资源到static目录](./images/拷贝静态资源到static目录.png)
+
+启动项目并访问 http://localhost:8080/
+
+![Springboot整合ssm页面](./images/Springboot整合ssm页面.png)
 
 
 
