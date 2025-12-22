@@ -1107,5 +1107,494 @@ public class BookServiceTest {
 
 ### MybatisPlus
 
-https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=104
+MyBatisPlus（简称MP），是基于MyBatis框架基础上开发的增强型工具，旨在简化开发、太高效率。
+
+官网：https://mybatis.plus/    https://mp.baomidou.com/
+
+![MyBatisPlus特性](./images/MyBatisPlus特性.png)
+
+
+
+#### 入门案例
+
+MyBatisPlus有三种开发方式：
+
+- 基于MyBatis使用MyBatisPlus
+- 基于Spring使用MyBatisPlus
+- 基于SpringBoot使用MyBatisPlus
+
+本次案例选择第三种开发方式。
+
+准备数据库表
+
+`mybatisplus_db.user`
+
+```sql
+CREATE TABLE `user` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `password` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `age` int(11) DEFAULT NULL,
+  `tel` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+```
+
+创建SpringBoot项目工程`mybatisplus_01_quickstart`
+
+`pom.xml`
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>2.5.6</version>
+        <relativePath/> <!-- lookup parent from repository -->
+    </parent>
+
+    <groupId>com.stone</groupId>
+    <artifactId>mybatisplus_01_quickstart</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+
+    <properties>
+        <java.version>1.8</java.version>
+    </properties>
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter</artifactId>
+        </dependency>
+
+        <!--MyBatisPlus依赖-->
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-boot-starter</artifactId>
+            <version>3.4.2</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>druid</artifactId>
+            <version>1.2.23</version>
+        </dependency>
+
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>
+```
+
+`application.yml`
+
+```yaml
+spring:
+  application:
+    name: mybatisplus_01_quickstart
+  datasource:
+    type: com.alibaba.druid.pool.DruidDataSource
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/mybatisplus_db?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai
+    username: root
+    password: 1234
+```
+
+`User`
+
+```java
+package com.stone.domain;
+
+/**
+ * user 表对应的实体类（Domain/POJO）
+ */
+public class User {
+    /**
+     * 主键ID，自增
+     */
+    private Long id;
+
+    /**
+     * 用户名
+     */
+    private String name;
+
+    /**
+     * 密码（通常为加密存储）
+     */
+    private String password;
+
+    /**
+     * 年龄
+     */
+    private Integer age;
+
+    /**
+     * 手机号码
+     */
+    private String tel;
+
+    // getter 方法
+    public Long getId() {
+        return id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public Integer getAge() {
+        return age;
+    }
+
+    public String getTel() {
+        return tel;
+    }
+
+    // setter 方法
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public void setAge(Integer age) {
+        this.age = age;
+    }
+
+    public void setTel(String tel) {
+        this.tel = tel;
+    }
+
+    // 可选：重写 toString 方法
+    @Override
+    public String toString() {
+        return "User{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", password='" + password + '\'' +
+                ", age=" + age +
+                ", tel='" + tel + '\'' +
+                '}';
+    }
+}
+```
+
+<span style="color:red;">`UserDao`</span>
+
+```java
+package com.stone.dao;
+
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.stone.domain.User;
+import org.apache.ibatis.annotations.Mapper;
+
+@Mapper
+public interface UserDao extends BaseMapper<User> {
+}
+```
+
+编写单元测试
+
+```java
+package com.stone;
+
+import com.stone.dao.UserDao;
+import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.SpringBootTest;
+
+import javax.annotation.Resource;
+
+@SpringBootTest
+class Mybatisplus01QuickstartApplicationTests {
+
+    @Resource
+    private UserDao userDao;
+
+    @Test
+    void contextLoads() {
+        userDao.selectList(null).forEach(System.out::println);
+    }
+
+}
+```
+
+最终测试结果
+
+![mybatisplus入门案例单元测试结果](./images/mybatisplus入门案例单元测试结果.png)
+
+
+
+#### 标准数据层开发
+
+MyBatisPlus提供的标准CRUD功能接口如下：
+
+![MyBatisPlus提供的标准CRUD功能接口](./images/MyBatisPlus提供的标准CRUD功能接口.png)
+
+我们可以依次编写单元测试方法来看看效果，详见项目代码
+
+
+
+#### 标准分页功能
+
+通过MyBatisPlus拦截器开启分页功能
+
+```java
+package com.stone.config;
+
+import com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor;
+import com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+/**
+ * Mybatis Plus 配置类
+ */
+@Configuration
+public class MPConfig {
+
+    @Bean
+    public MybatisPlusInterceptor mybatisPlusInterceptor() {
+        // 定义MybatisPlus拦截器
+        MybatisPlusInterceptor interceptor = new MybatisPlusInterceptor();
+        // 添加分页拦截器
+        interceptor.addInnerInterceptor(new PaginationInnerInterceptor());
+        return interceptor;
+    }
+}
+```
+
+测试分页查询
+
+```java
+@Test
+void testGetByPage() {
+    IPage<User> page = new Page<>(1, 2);
+    IPage<User> userIPage = userDao.selectPage(page, null);
+    System.out.println("当前页码值: " + userIPage.getCurrent());
+    System.out.println("每页显示数: " + userIPage.getSize());
+    System.out.println("总页码数: " + userIPage.getPages());
+    System.out.println("总记录数: " + userIPage.getTotal());
+    System.out.println("userIPage结果: " + userIPage.getRecords());
+}
+```
+
+此外我们还可以在`application.yml`中配置开启MyBatisPlus的控制台日志，打印SQL
+
+```yaml
+# MyBatisPlus开启控制台日志
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+```
+
+最终结果如下
+
+![MyBatisPlus分页功能单元测试结果](./images/MyBatisPlus分页功能单元测试结果.png)
+
+
+
+#### DQL编程控制
+
+##### 条件查询
+
+MyBatisPlus将复杂的SQL查询条件进行了封装，使用编程的形式完成查询条件的组合
+
+创建SpringBoot项目工程`mybatisplus_02_dql`
+
+`pom.xml`
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>2.5.6</version>
+		<relativePath/> <!-- lookup parent from repository -->
+	</parent>
+
+	<groupId>com.stone</groupId>
+	<artifactId>mybatisplus_02_dql</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+
+	<properties>
+		<java.version>1.8</java.version>
+	</properties>
+	<dependencies>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter</artifactId>
+		</dependency>
+
+		<!--MyBatisPlus依赖-->
+		<dependency>
+			<groupId>com.baomidou</groupId>
+			<artifactId>mybatis-plus-boot-starter</artifactId>
+			<version>3.4.2</version>
+		</dependency>
+
+		<dependency>
+			<groupId>com.alibaba</groupId>
+			<artifactId>druid</artifactId>
+			<version>1.2.23</version>
+		</dependency>
+
+		<!--lombok-->
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>mysql</groupId>
+			<artifactId>mysql-connector-java</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+		</plugins>
+	</build>
+
+</project>
+```
+
+`application.yml`
+
+```yaml
+spring:
+  application:
+    name: mybatisplus_01_quickstart
+  datasource:
+    type: com.alibaba.druid.pool.DruidDataSource
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/mybatisplus_db?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai
+    username: root
+    password: 1234
+  # 关闭SpringBoot控制台Banner
+  main:
+    banner-mode: off
+mybatis-plus:
+  global-config:
+    # 关闭MyBatisPlus控制台Banner
+    banner: false
+```
+
+配置`logback.xml`用于关闭冗余的控制台日志
+
+```xml
+<?xml version="1.0" encoding="UTF-8" ?>
+<configuration>
+<!--  空标签用于去除多余的控制台日志输出  -->
+</configuration>
+```
+
+编写Dao和Domain：**略**
+
+编写单元测试方法
+
+```java
+package com.stone;
+
+import com.stone.dao.UserDao;
+import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.SpringBootTest;
+
+import javax.annotation.Resource;
+
+@SpringBootTest
+class Mybatisplus02DqlApplicationTests {
+
+	@Resource
+	private UserDao userDao;
+
+	@Test
+	void testGetAll() {
+		userDao.selectList(null).forEach(System.out::println);
+	}
+
+}
+```
+
+<span style="color:red;">接下来我们尝试将查询全部改造为条件查询</span>
+
+```java
+@Test
+void testGetAll() {
+    // 方式一：创建条件构造器
+    QueryWrapper<User> wrapper = new QueryWrapper<>();
+    // 构造查询条件：age < 25
+    wrapper.lt("age", 25);
+    userDao.selectList(wrapper).forEach(System.out::println);
+
+    // 方式二：Lambda格式按条件查询
+    QueryWrapper<User> lambdaWrapper = new QueryWrapper<>();
+    lambdaWrapper.lambda().lt(User::getAge, 25);
+    userDao.selectList(lambdaWrapper).forEach(System.out::println);
+
+    // 方式三：Lambda格式按条件查询（推荐）
+    LambdaQueryWrapper<User> lambdaQueryWrapper2 = new LambdaQueryWrapper<>();
+    // lambdaQueryWrapper2.lt(User::getAge, 25);
+    // and 方式连接多条件 链式编程
+    // lambdaQueryWrapper2.lt(User::getAge, 30).gt(User::getAge, 10);
+    // or  方式连接多条件 链式编程
+    // lambdaQueryWrapper2.lt(User::getAge, 10).or().gt(User::getAge, 30);
+    userDao.selectList(lambdaQueryWrapper2).forEach(System.out::println);
+}
+```
+
+##### NULL判定
+
+
+
+# END
+
+https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=110
 
