@@ -1,8 +1,11 @@
 package com.stone.domain;
 
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
 @Data
+@TableName("user")
 public class User {
     /**
      * 主键
@@ -17,6 +20,7 @@ public class User {
     /**
      * 密码（通常为加密存储）
      */
+    @TableField(value = "pwd", select = false)
     private String password;
 
     /**
@@ -28,4 +32,10 @@ public class User {
      * 手机号码
      */
     private String tel;
+
+    /**
+     * 邮箱
+     */
+    @TableField(exist = false)
+    private String email;
 }

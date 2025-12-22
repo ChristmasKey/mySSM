@@ -1592,9 +1592,139 @@ void testGetAll() {
 
 ##### NULL判定
 
+模仿前端表单传值，查询条件会存在为null的情况，因此我们需要对其进行处理
+
+```java
+@Test
+void testNullValue() {
+    // 模拟查询条件
+    UserQuery userQuery = new UserQuery();
+    userQuery.setMinAge(20);
+    // userQuery.setMaxAge(30);
+
+    LambdaQueryWrapper<User> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+    // 只有当查询条件传值非空时，对应的查询条件才会生效
+    lambdaQueryWrapper.lt(userQuery.getMaxAge() != null, User::getAge, userQuery.getMaxAge());
+    lambdaQueryWrapper.gt(userQuery.getMinAge() != null, User::getAge, userQuery.getMinAge());
+    userDao.selectList(lambdaQueryWrapper).forEach(System.out::println);
+}
+```
+
+##### 查询投影
+
+查询结果包含模型类中部分属性
+
+```java
+@Test
+void testData() {
+    // LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
+    // queryWrapper.select(User::getId, User::getName, User::getAge);
+    // 或
+    QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+    queryWrapper.select("id", "name", "age");
+    userDao.selectList(queryWrapper).forEach(System.out::println);
+}
+```
+
+查询结果包含模型类中未定义的属性
+
+```java
+@Test
+void testData() {
+    QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+    queryWrapper.select("count(*) as count, tel");
+    queryWrapper.groupBy("tel");
+    userDao.selectList(queryWrapper).forEach(System.out::println);
+}
+```
+
+##### 查询条件
+
+![mybatisplus的查询条件](./images/mybatisplus的查询条件.png)
+
+```java
+@Test
+void testCondition() {
+    LambdaQueryWrapper<User> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+    lambdaQueryWrapper.eq(User::getName, "Tom").eq(User::getPassword, "Jerry");
+    User user = userDao.selectOne(lambdaQueryWrapper);
+    System.out.println(user);
+
+    LambdaQueryWrapper<User> lambdaQueryWrapper2 = new LambdaQueryWrapper<>();
+    // 范围查询：lt le gt ge between eq
+    lambdaQueryWrapper2.between(User::getAge, 20, 30);
+    userDao.selectList(lambdaQueryWrapper2).forEach(System.out::println);
+
+    LambdaQueryWrapper<User> lambdaQueryWrapper3 = new LambdaQueryWrapper<>();
+    // 模糊查询：like
+    lambdaQueryWrapper3.like(User::getName, "Tom");
+    userDao.selectList(lambdaQueryWrapper2).forEach(System.out::println);
+}
+```
+
+##### 映射匹配兼容性
+
+两个注解：
+
+![TableName注解](./images/TableName注解.png)
+
+---
+
+![TableField注解](./images/TableField注解.png)
+
+```java
+package com.stone.domain;
+
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableName;
+import lombok.Data;
+
+@Data
+@TableName("user")
+public class User {
+    /**
+     * 主键
+     */
+    private Long id;
+
+    /**
+     * 用户名
+     */
+    private String name;
+
+    /**
+     * 密码（通常为加密存储）
+     */
+    @TableField(value = "pwd", select = false)
+    private String password;
+
+    /**
+     * 年龄
+     */
+    private Integer age;
+
+    /**
+     * 手机号码
+     */
+    private String tel;
+
+    /**
+     * 邮箱
+     */
+    @TableField(exist = false)
+    private String email;
+}
+```
+
+
+
+#### DML编程控制
+
+##### ID生成策略
+
 
 
 # END
 
-https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=110
+https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=114
 
