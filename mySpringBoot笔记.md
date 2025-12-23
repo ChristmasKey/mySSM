@@ -1722,9 +1722,222 @@ public class User {
 
 ##### ID生成策略
 
+![ID生成策略](./images/ID生成策略.png)
+
+---
+
+![TableId注解](./images/TableId注解.png)
+
+创建SpringBoot项目工程`mybatisplus_03_dml`，基本配置和代码同上
+
+在domain中指定ID生成策略
+
+```java
+package com.stone.domain;
+
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
+import lombok.Data;
+
+@Data
+@TableName("user")
+public class User {
+    // 指定ID生成策略
+    @TableId(type = IdType.AUTO)
+    private Long id;
+    private String name;
+    private Integer age;
+    private String password;
+    private String tel;
+}
+```
+
+编写单元测试方法
+
+```java
+@Test
+void testInsert() {
+    User user = new User();
+    user.setName("张三");
+    user.setAge(20);
+    user.setPassword("zhangsan@stone.com");
+    user.setTel("123456789");
+    userDao.insert(user);
+}
+```
+
+关于几种ID生成策略：
+
+- AUTO：使用数据库id自增策略控制id生成
+- NONE：不设置id生成策略
+- INPUT：用户手动输入id
+- ASSIGN_ID：雪花算法生成id（可兼容数值型与字符串型）
+- ASSIGN_UUID：以UUID生成算法作为id生成策略
+
+<span style="color:red;">此外还可以通过配置文件全局配置ID生成策略</span>
+
+```yaml
+mybatis-plus:
+  global-config:
+    db-config:
+      # id生成策略
+      id-type: auto
+      # 指定表名前缀
+      table-prefix: tbl_
+```
+
+##### 多数据操作
+
+```java
+@Test
+void testBatchOper() {
+    List<Long> list = new ArrayList<>();
+    list.add(1L);
+    list.add(2L);
+    list.add(3L);
+    // 批量删除
+    userDao.deleteBatchIds(list);
+    // 批量查询
+    userDao.selectBatchIds(list).forEach(System.out::println);
+}
+```
+
+##### 逻辑删除
+
+修改表结构
+
+```sql
+ALTER TABLE `mybatisplus_db`.`user` 
+ADD COLUMN `deleted` int(1) NULL DEFAULT 0 AFTER `tel`;
+```
+
+实体类中添加属性
+
+```java
+@TableLogic(value = "0", delval = "1")
+private Integer deleted;
+```
+
+执行删除操作
+
+```java
+@Test
+void testLogicDel() {
+    userDao.deleteById(1L);
+}
+```
+
+<span style="color:red;">全局配置逻辑删除</span>
+
+```yaml
+mybatis-plus:
+  global-config:
+    db-config:
+      # id生成策略
+      id-type: auto
+      # 指定表名前缀
+      table-prefix: tbl_
+      # 逻辑删除
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+```
+
+
+
+#### 乐观锁
+
+业务并发现象带来的问题：秒杀
+
+修改表结构
+
+```sql
+ALTER TABLE `mybatisplus_db`.`user` 
+ADD COLUMN `version` int(11) NULL DEFAULT 1 AFTER `deleted`;
+```
+
+实体类中添加属性
+
+```java
+@Version
+private Integer version;
+```
+
+配置文件中开启MyBatisPlus的日志
+
+```yaml
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+```
+
+添加乐观锁拦截器
+
+```java
+package com.stone.config;
+
+import com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor;
+import com.baomidou.mybatisplus.extension.plugins.inner.OptimisticLockerInnerInterceptor;
+import com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+public class MpConfig {
+
+    @Bean
+    public MybatisPlusInterceptor mpInterceptor(){
+        MybatisPlusInterceptor mpInterceptor = new MybatisPlusInterceptor();
+        // 添加分页拦截器
+        mpInterceptor.addInnerInterceptor(new PaginationInnerInterceptor());
+        // 添加乐观锁拦截器
+        mpInterceptor.addInnerInterceptor(new OptimisticLockerInnerInterceptor());
+        return mpInterceptor;
+    }
+}
+```
+
+编写单元测试方法
+
+```java
+@Test
+void testOptimisticLock() {
+    User user = userDao.selectById(2L);
+    user.setName("李四");
+    userDao.updateById(user);
+}
+```
+
+查看控制台打印日志
+
+![乐观锁测试方法控制台日志](./images/乐观锁测试方法控制台日志.png)
+
+<span style="color:red;">乐观锁作用的业务模拟</span>
+
+```java
+@Test
+void testOptimisticLock() {
+    User user = userDao.selectById(2L);  // version = 3
+    User user2 = userDao.selectById(2L); // version = 3
+
+    user.setName("StoneAAA");
+    userDao.updateById(user);  // version = 4
+
+    user2.setName("StoneBBB");
+    userDao.updateById(user2); // 执行update失败，因为id=2L的record的version = 4，而user2的version = 3
+}
+```
+
+
+
+#### 代码生成器
+
+创建SpringBoot项目工程`mybatisplus_04_generator`，详见项目代码；
+
 
 
 # END
 
-https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=114
+https://www.bilibili.com/video/BV1Fi4y1S7ix?spm_id_from=333.788.player.switch&vd_source=71b23ebd2cd9db8c137e17cdd381c618&p=118
 
